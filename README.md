@@ -1,0 +1,2 @@
+# rustest
+My rust playground
