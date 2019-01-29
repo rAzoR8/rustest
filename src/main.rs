@@ -16,9 +16,13 @@ mod vec;
 // }
 
 fn main() {
+    type Vec4 = vec::vec::Vec4; // why the hell vec::vec ???
 
-    let v =  vec::vec::Vec4::new();
-    let v2 = vec::vec::Vec4::new();
+    let v =  Vec4::from([2.0, 5.0, 5.0]);
+    let v2 = Vec4::from([1.0, 2.0, 3.0]);
+    let kdk = v.cross3(&v2);
+    let test = v.cross3_simd(&v2);
+
 
     let mut asspiss = String::new();
 
