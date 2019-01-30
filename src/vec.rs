@@ -1,7 +1,7 @@
-pub mod vec {
+//pub mod vec {
     use packed_simd::f32x4;
     use std::ops::{Index,IndexMut};
-    
+
     pub struct Vec4
     {
         pub x: f32,
@@ -14,28 +14,22 @@ pub mod vec {
         pub fn new() -> Vec4
         {
             Vec4{x: 0.0, y: 0.0, z :0.0, w : 0.0}
-            //Vec4{d: f32x4::splat(0.)}
         }
 
-        // pub fn from_elements(x: f32, y: f32, z: f32, w: f32) -> Vec4
-        // {
-        //     Vec4{d: f32x4::new(x, y, z, w)}
-        // }
+        pub fn swizzle(&self, idx: [u32; 4]) -> Vec4
+        {
+            Vec4
+            {
+                x: *self.index(idx[0]),
+                y: *self.index(idx[1]),
+                z: *self.index(idx[2]),
+                w: *self.index(idx[3])
+            }
+        }
 
-        // pub fn get(&self) -> &f32x4
-        // {
-        //     &self.d
-        // }
-
-        // pub fn get_mut(&mut self) -> &mut f32x4
-        // {
-        //     &mut self.d
-        // }
-        
-        // pub fn shuffle(&self, indices: packed_simd::Simd<[u32; 4]>) -> Vec4
-        // {
-        //     Vec4{d: self.d.shuffle1_dyn(indices)}
-        // }
+//######################################################################
+// Dot product
+//######################################################################
 
         pub fn dot_simd(&self, o: &Vec4) -> f32
         {
@@ -49,6 +43,165 @@ pub mod vec {
         {
             &self.x * &o.x + &self.y * &o.y + &self.z * &o.z + &self.w * &o.w
         }
+
+        pub fn dot3(&self, o: &Vec4) -> f32
+        {
+            &self.x * &o.x + &self.y * &o.y + &self.z * &o.z
+        }
+
+        pub fn dot3_simd(&self, o: &Vec4) -> f32
+        {
+            let l = f32x4::new(self.x, self.y, self.z, 0.0);
+            let r = f32x4::new(o.x, o.y, o.z, 0.0);
+
+            (l * r).sum()
+        }
+
+//######################################################################
+// Square length
+//######################################################################
+
+        pub fn square_length(&self) -> f32
+        {
+            self.dot(&self)
+        }
+
+        pub fn square_length_simd(&self) -> f32
+        {
+            let l = f32x4::new(self.x, self.y, self.z, self.w);
+            (l * l).sum()
+        }
+
+        pub fn square_length3(&self) -> f32
+        {
+            self.dot3(&self)
+        }
+
+        pub fn square_length3_simd(&self) -> f32
+        {
+            let l = f32x4::new(self.x, self.y, self.z, 0.0);
+            (l * l).sum()
+        }
+
+//######################################################################
+// Length
+//######################################################################
+
+        pub fn length(&self) -> f32
+        {
+            self.dot(&self).sqrt()
+        }
+
+        pub fn length_simd(&self) -> f32
+        {
+            self.square_length_simd().sqrt()
+        }
+
+        pub fn length3(&self) -> f32
+        {
+            self.dot3(&self).sqrt()
+        }
+
+        pub fn length3_simd(&self) -> f32
+        {
+            self.square_length_simd().sqrt()
+        }
+
+//######################################################################
+// Normalize
+//######################################################################
+
+        pub fn normalize(&mut self) -> &mut Self
+        {
+            let length = self.length();
+            self.x /= length;
+            self.y /= length;
+            self.z /= length;
+            self.w /= length;
+
+            self
+        }
+
+        pub fn normalize_simd(&mut self) -> &mut Self
+        {
+            let mut l = f32x4::new(self.x, self.y, self.z, self.w);
+            l /= (l * l).sum().sqrt();
+            self.x = l.extract(0);
+            self.y = l.extract(1);
+            self.z = l.extract(2);
+            self.w = l.extract(3);
+
+            self
+        }
+
+        pub fn normalize3(&mut self) -> &mut Self
+        {
+            let length = self.length3();
+            self.x /= length;
+            self.y /= length;
+            self.z /= length;
+
+            self
+        }
+
+        pub fn normalize3_simd(&mut self) -> &mut Self
+        {
+            let mut l = f32x4::new(self.x, self.y, self.z, 0.0);
+            l /= (l * l).sum().sqrt();
+            self.x = l.extract(0);
+            self.y = l.extract(1);
+            self.z = l.extract(2);
+
+            self
+        }
+
+//######################################################################
+// Norm
+//######################################################################
+
+        pub fn norm(&self) -> Self
+        {
+            let length = self.length();
+            Vec4
+            {
+                x: self.x / length,
+                y: self.y / length,
+                z: self.z / length,
+                w: self.w / length
+            }
+        }
+
+        pub fn norm3(&self) -> Self
+        {
+            let length = self.length3();
+            Vec4
+            {
+                x: self.x / length,
+                y: self.y / length,
+                z: self.z / length,
+                w: 0.0
+            }
+        }
+
+        pub fn norm_simd(&self) -> Self
+        {
+            let mut v = f32x4::new(self.x, self.y, self.z, self.w);
+            v /= (v * v).sum().sqrt();
+
+            Vec4::from(v)
+        }
+
+        pub fn norm3_simd(&self) -> Self
+        {
+            let mut v = f32x4::new(self.x, self.y, self.z, 0.0);
+            v /= (v * v).sum().sqrt();
+
+            Vec4::from(v)
+        }
+
+//######################################################################
+// Cross product
+//######################################################################
 
         pub fn cross3(&self, o: &Vec4) -> Vec4
         {
@@ -85,6 +238,10 @@ pub mod vec {
         }
     } // impl Vec4
 
+//######################################################################
+// Index
+//######################################################################
+
     impl Index<u32> for Vec4
     {
         type Output = f32;
@@ -116,6 +273,10 @@ pub mod vec {
             }
         }
     }
+
+//######################################################################
+// From
+//######################################################################
 
     impl From<[f32; 4]> for Vec4
     {
@@ -150,5 +311,33 @@ pub mod vec {
         }
     }
 
+    impl From<f32x4> for Vec4
+    {
+        fn from(v: f32x4) -> Self
+        {
+            Vec4
+            {
+                x: v.extract(0),
+                y: v.extract(1),
+                z: v.extract(2),
+                w: v.extract(3)
+            }
+        }
+    }
+
+    impl From<&f32x4> for Vec4
+    {
+        fn from(v: &f32x4) -> Self
+        {
+            Vec4
+            {
+                x: v.extract(0),
+                y: v.extract(1),
+                z: v.extract(2),
+                w: v.extract(3)
+            }
+        }
+    }
+
     // Traits
-} // vec
+// // vec
