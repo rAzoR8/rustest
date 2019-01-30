@@ -1,4 +1,3 @@
-//use packed_simd::*;
 mod vec;
 
 // pub fn dot_prod(a: &[f32], b: &[f32]) -> f32 {
@@ -15,6 +14,10 @@ mod vec;
 //     sum.sum()
 // }
 
+extern crate image;
+
+use image::{GenericImage, ImageBuffer, imageops};
+
 fn main() {
     type Vec4 = vec::Vec4;
 
@@ -27,22 +30,22 @@ fn main() {
     let norm = kdk.norm_simd();
     let l = kdk.normalize_simd().length();
 
-    let mut asspiss = String::new();
+    let width = 800;
+    let height = 800;
 
-    let x = 3;
-    let y = x * 3;
+    // Create a new ImgBuf with width: imgx and height: imgy
+    //let mut imgbuf = RgbaImage::new(width as u32, height as u32);
 
-    asspiss += "test";
+    //let mut imgbuf: image::ImageBuffer<image::Rgba<u8>, _> = image::ImageBuffer::new(width as u32, height as u32);
+    //let mut imgbuf: image::RgbaImage = image::ImageBuffer::new(width as u32, height as u32);
 
-    println!("out {}", asspiss);
+    let mut imgbuf = image::ImageBuffer::new(width, height);
 
-    //let mut sum = dot_prod(&[1.2, 1.4, 4.6, 3.5], &[1.2, 1.4, 4.6, 3.5]);
-    //let mut sum2 = dot_prod(&[1.33, 1.4, 4.6, 3.5], &[1.2, 5.4, 4.6, 3.5]);
+    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+        let r = (0.3 * x as f32) as u8;
+        let b = (0.3 * y as f32) as u8;
+        *pixel = image::Rgb([r, 0, b]);
+    }
 
-    //println!("sum {}", sum + sum2);
-
-    let s = String::from("hello world");
-
-    let hello = &s[0..5];
-    let world = &s[6..11];
+    imgbuf.save("test.png").unwrap();
 }
