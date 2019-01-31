@@ -21,14 +21,11 @@ use image::{GenericImage, ImageBuffer, imageops};
 fn main() {
     type Vec4 = vec::Vec4;
 
-    let v =  Vec4::from([2.0, 5.0, 5.0]);
-    let v2 = Vec4::from([1.0, 2.0, 3.0]);
-    let mut kdk = v.cross3(&v2);
-    let test = v.cross3_simd(&v2);
-    let d = kdk.dot(&test);
-
-    let norm = kdk.norm_simd();
-    let l = kdk.normalize_simd().length();
+    let mut v =  Vec4::from(2.0, 5.0, 5.0);
+    let v2 = Vec4::from(1.0, 2.0, 3.0);
+    let d = v.dot(&v2);
+    
+    let x = v.norm3();
 
     let width = 800;
     let height = 800;
