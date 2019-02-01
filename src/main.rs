@@ -23,6 +23,15 @@ fn main() {
 
     let mut v =  Vec4::from(2.0, 5.0, 5.0);
     let v2 = Vec4::from(1.0, 2.0, 3.0);
+
+    let c1 = v.cross3_trimmed(&v2);
+    let c2 = v.cross3_validate(&v2);
+
+    if c1 != c2
+    {
+        print!("hey!")
+    }
+
     let d = v.dot(&v2);
     
     let x = v.norm3();
