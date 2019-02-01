@@ -1,4 +1,6 @@
-mod vec;
+pub mod strahl;
+
+//mod primitives;
 
 // pub fn dot_prod(a: &[f32], b: &[f32]) -> f32 {
 //     assert_eq!(a.len(), b.len());
@@ -19,10 +21,10 @@ extern crate image;
 use image::{GenericImage, ImageBuffer, imageops};
 
 fn main() {
-    type Vec4 = vec::Vec4;
+    //type Vec4 = vec::Vec4;
 
-    let mut v =  Vec4::from(2.0, 5.0, 5.0);
-    let v2 = Vec4::from(1.0, 2.0, 3.0);
+    let mut v =  strahl::vec::Vec4::from(0.0, 0.0, 1.0);
+    let v2 =  strahl::vec::Vec4::from(1.0, 2.0, 3.0);
 
     let c1 = v.cross3_trimmed(&v2);
     let c2 = v.cross3_validate(&v2);
@@ -32,9 +34,7 @@ fn main() {
         print!("hey!")
     }
 
-    let d = v.dot(&v2);
-    
-    let x = v.norm3();
+    //let s = primitives::Sphere::new(v, 1.0);
 
     let width = 800;
     let height = 800;
