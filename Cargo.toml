@@ -1,5 +1,5 @@
 [package]
-name = "tracer"
+name = "strahl"
 version = "0.1.0"
 authors = ["Fabian Wahlster <wahlster@ux3d.io>"]
 edition = "2018"
@@ -8,3 +8,4 @@ edition = "2018"
 packed_simd = "*"
 rayon = "1.0.3"
 image = "*"
+rand = "*"

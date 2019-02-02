@@ -37,7 +37,7 @@ impl Hitable for Sphere
             {
                 out.depth = depth1;
                 out.point = r.point_at(depth1);
-                out.normal = (out.point - self.pos) / a;
+                out.normal = ((out.point - self.pos) / a).norm();
                 return true;
             }
 
@@ -47,7 +47,7 @@ impl Hitable for Sphere
             {
                 out.depth = depth2;
                 out.point = r.point_at(depth2);
-                out.normal = (out.point - self.pos) / a;
+                out.normal = ((out.point - self.pos) / a).norm();
                 return true;
             }            
         }

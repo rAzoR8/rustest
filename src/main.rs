@@ -9,6 +9,7 @@ type Vec4 = strahl::vec::Vec4;
 type Ray = strahl::ray::Ray;
 type Sphere = strahl::primitives::Sphere;
 type HitInfo = strahl::hit::HitInfo;
+type Camera = strahl::camera::Camera;
 
 fn color(ray: &Ray, obj: &Hitable) -> Vec4
 {
@@ -28,13 +29,14 @@ fn color(ray: &Ray, obj: &Hitable) -> Vec4
 fn main() {
     let s = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5);
 
-    let width = 200;
-    let height = 100;
+    let width = 800;
+    let height = 450;
 
-    let llc = Vec4::from3(-2.0, -1.0, -1.0);
-    let horizontal = Vec4::from3(4.0, 0.0, 0.0);
-    let vertical = Vec4::from3(0.0, 2.0, 0.0);
     let origin = Vec4::zero();
+    let target = Vec4::from3(0.0, 0.0, -1.0);
+    let up = Vec4::from3(0.0, 1.0, 0.0);
+
+    let cam = Camera::new(origin, target, up, 60.0, width as f32 / height as f32, 0.0, 100.0);
 
     let mut imgbuf = image::ImageBuffer::new(width, height);
 
@@ -42,7 +44,7 @@ fn main() {
         let u = x as f32 / width as f32;
         let v = y as f32 / height as f32;
 
-        let ray = Ray::new(origin, llc + u*horizontal + v*vertical);
+        let ray = cam.get_ray(u, v);
 
         let col = color(&ray, &s) * 255.99;
 

@@ -5,11 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(Windows) Launch",
+            "name": "(Windows) Launch debug",
             "type": "cppvsdbg",
             "request": "launch",
             "preLaunchTask": "cargo run",
-            "program": "${workspaceFolder}/target/debug/tracer.exe",
+            "program": "${workspaceFolder}/target/debug/strahl.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
