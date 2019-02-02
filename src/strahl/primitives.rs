@@ -20,7 +20,38 @@ impl Hitable for Sphere
 {
     fn hit(&self, r: &Ray, out: &mut HitInfo, min: f32, max: f32) -> bool
     {
-        let oc = self.pos - r.origin;
-        true
+        let op = r.origin - self.pos;
+        let a = r.direction.square_length();
+        let b = op.dot(&r.direction);
+        let c = op.square_length() - self.radius*self.radius;
+        let discriminant = b * b - a * c;
+
+        if discriminant > 0.0
+        {
+            let sq_discriminant = discriminant.sqrt();
+
+            // solution 1
+            let depth1 = (-b - sq_discriminant) / a;
+
+            if depth1 > min && depth1 < max
+            {
+                out.depth = depth1;
+                out.point = r.point_at(depth1);
+                out.normal = (out.point - self.pos) / a;
+                return true;
+            }
+
+            let depth2 = (-b + sq_discriminant) / a;
+
+            if depth2 > min && depth2 < max
+            {
+                out.depth = depth2;
+                out.point = r.point_at(depth2);
+                out.normal = (out.point - self.pos) / a;
+                return true;
+            }            
+        }
+
+        false
     }
 }

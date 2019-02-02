@@ -18,7 +18,7 @@ use crate::strahl::hit::Hitable;
 
 extern crate image;
 
-use image::{GenericImage, ImageBuffer, imageops};
+use image::{ImageBuffer, imageops};
 
 fn main() {
     type Vec4 = strahl::vec::Vec4;
@@ -43,9 +43,8 @@ fn main() {
     let test = Vec4::from(0.0);
 
     let ray = Ray::new(test, Vec4::from3(0.0, 0.0, 1.0));
-    let p = ray.point_at(3.0);
 
-    let s = Sphere::new(v, 1.0);
+    let s = Sphere::new(Vec4::from3(0.0, 0.0, 2.0), 1.0);
 
     let mut hit = HitInfo::new();
     let didhit = s.hit(&ray, &mut hit, 0.0, 100.0);
