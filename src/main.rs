@@ -1,63 +1,55 @@
 pub mod strahl;
-
 use crate::strahl::hit::Hitable;
-
-// pub fn dot_prod(a: &[f32], b: &[f32]) -> f32 {
-//     assert_eq!(a.len(), b.len());
-//     assert!(a.len() % 4 == 0);
-
-//     let mut sum = f32x4::splat(0.);
-
-//     for i in (0..a.len()).step_by(4) {
-//         sum += f32x4::from_slice_unaligned(&a[i..])
-//             * f32x4::from_slice_unaligned(&b[i..]);
-//     }
-
-//     sum.sum()
-// }
 
 extern crate image;
 
 use image::{ImageBuffer, imageops};
 
-fn main() {
-    type Vec4 = strahl::vec::Vec4;
-    type Ray = strahl::ray::Ray;
-    type Sphere = strahl::primitives::Sphere;
-    type HitInfo = strahl::hit::HitInfo;
+type Vec4 = strahl::vec::Vec4;
+type Ray = strahl::ray::Ray;
+type Sphere = strahl::primitives::Sphere;
+type HitInfo = strahl::hit::HitInfo;
 
-    let mut v =  Vec4::from3(0.0, 0.0, 1.0);
-    let v2 =  Vec4::from3(1.0, 2.0, 3.0);
-
-    let c1 = v.cross3_trimmed(&v2);
-    let c2 = v.cross3_validate(&v2);
-
-    let c3 = c1 + c2 * 2.0;
-
-    if c1 != c2
-    {
-        print!("hey!")
-    }
-
-
-    let test = Vec4::from(0.0);
-
-    let ray = Ray::new(test, Vec4::from3(0.0, 0.0, 1.0));
-
-    let s = Sphere::new(Vec4::from3(0.0, 0.0, 2.0), 1.0);
-
+fn color(ray: &Ray, obj: &Hitable) -> Vec4
+{
     let mut hit = HitInfo::new();
-    let didhit = s.hit(&ray, &mut hit, 0.0, 100.0);
 
-    let width = 800;
-    let height = 800;
+    if obj.hit(&ray, &mut hit, 0.0, 100.0)
+    {
+        return (hit.normal + 1.0) * 0.5;
+    }
+    else // background
+    {
+        let t = 0.5 * (ray.direction.norm().y() + 1.0);
+        return Vec4::from(1.0-t) + t * Vec4::from3(0.5, 0.7, 1.0);
+    }
+}
+
+fn main() {
+    let s = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5);
+
+    let width = 200;
+    let height = 100;
+
+    let llc = Vec4::from3(-2.0, -1.0, -1.0);
+    let horizontal = Vec4::from3(4.0, 0.0, 0.0);
+    let vertical = Vec4::from3(0.0, 2.0, 0.0);
+    let origin = Vec4::zero();
 
     let mut imgbuf = image::ImageBuffer::new(width, height);
 
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        let r = (0.3 * x as f32) as u8;
-        let b = (0.3 * y as f32) as u8;
-        *pixel = image::Rgb([r, 0, b]);
+        let u = x as f32 / width as f32;
+        let v = y as f32 / height as f32;
+
+        let ray = Ray::new(origin, llc + u*horizontal + v*vertical);
+
+        let col = color(&ray, &s) * 255.99;
+
+        let r = col.r() as u8;
+        let g = col.g() as u8;
+        let b = col.b() as u8;
+        *pixel = image::Rgb([r, g, b]);
     }
 
     imgbuf.save("test.png").unwrap();

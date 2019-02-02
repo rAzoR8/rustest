@@ -20,6 +20,18 @@ impl Vec4 {
         }
     }
 
+    pub fn zero() -> Vec4 {
+        Vec4 {
+            v: f32x4::splat(0.0)
+        }
+    }
+
+    pub fn one() -> Vec4 {
+        Vec4 {
+            v: f32x4::splat(1.0)
+        }
+    }
+
     pub fn get(&self) -> &f32x4 {
         &self.v
     }
@@ -194,7 +206,7 @@ impl Into<f32x4> for Vec4 {
 }
 
 //######################################################################
-// Add
+// Add Vec4 + Vec4
 //######################################################################
 
 impl Add<Vec4> for Vec4 {
@@ -222,6 +234,54 @@ impl AddAssign<Vec4> for Vec4 {
 impl AddAssign<&Vec4> for Vec4 {
     fn add_assign(&mut self, o: &Vec4) {
         self.v += o.v
+    }
+}
+
+//######################################################################
+// Add Vec4 + f32
+//######################################################################
+
+impl Add<f32> for Vec4 {
+    type Output = Vec4;
+
+    fn add(self, o: f32) -> Vec4 {
+        Vec4 { v: self.v + o }
+    }
+}
+
+impl Add<&f32> for Vec4 {
+    type Output = Vec4;
+
+    fn add(self, o: &f32) -> Vec4 {
+        Vec4 { v: self.v + *o }
+    }
+}
+
+impl AddAssign<f32> for Vec4 {
+    fn add_assign(&mut self, o: f32) {
+        self.v += o
+    }
+}
+
+impl AddAssign<&f32> for Vec4 {
+    fn add_assign(&mut self, o: &f32) {
+        self.v += *o
+    }
+}
+
+impl Add<Vec4> for f32 {
+    type Output = Vec4;
+
+    fn add(self, o: Vec4) -> Vec4 {
+        Vec4 { v: o.v + self}
+    }
+}
+
+impl Add<&Vec4> for f32 {
+    type Output = Vec4;
+
+    fn add(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: o.v + self}
     }
 }
 
@@ -258,6 +318,54 @@ impl SubAssign<&Vec4> for Vec4 {
 }
 
 //######################################################################
+// Sub Vec4 - f32
+//######################################################################
+
+impl Sub<f32> for Vec4 {
+    type Output = Vec4;
+
+    fn sub(self, o: f32) -> Vec4 {
+        Vec4 { v: self.v - o }
+    }
+}
+
+impl Sub<&f32> for Vec4 {
+    type Output = Vec4;
+
+    fn sub(self, o: &f32) -> Vec4 {
+        Vec4 { v: self.v - *o }
+    }
+}
+
+impl SubAssign<f32> for Vec4 {
+    fn sub_assign(&mut self, o: f32) {
+        self.v -= o
+    }
+}
+
+impl SubAssign<&f32> for Vec4 {
+    fn sub_assign(&mut self, o: &f32) {
+        self.v -= *o
+    }
+}
+
+impl Sub<Vec4> for f32 {
+    type Output = Vec4;
+
+    fn sub(self, o: Vec4) -> Vec4 {
+        Vec4 { v: self - o.v}
+    }
+}
+
+impl Sub<&Vec4> for f32 {
+    type Output = Vec4;
+
+    fn sub(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: self - o.v }
+    }
+}
+
+//######################################################################
 // Mul
 //######################################################################
 
@@ -280,6 +388,24 @@ impl Mul<f32> for Vec4 {
 
     fn mul(self, o: f32) -> Vec4 {
         Vec4 { v: self.v * o }
+    }
+}
+
+impl Mul<Vec4> for f32
+{
+    type Output = Vec4;
+
+    fn mul(self, o: Vec4) -> Vec4 {
+        Vec4 { v: o.v * self}
+    }
+}
+
+impl Mul<&Vec4> for f32
+{
+    type Output = Vec4;
+
+    fn mul(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: o.v * self}
     }
 }
 
@@ -328,10 +454,6 @@ impl DivAssign<f32> for Vec4 {
         self.v /= o
     }
 }
-
-//######################################################################
-// Copy
-//######################################################################
 
 impl PartialEq for Vec4 {
     fn eq(&self, o: &Vec4) -> bool {
