@@ -13,9 +13,8 @@ impl Ray {
         }
     }
 
-    pub fn point_at(self, dist: f32) -> Vec4
+    pub fn point_at(&self, dist: f32) -> Vec4
     {
-        self.origin + &(self.direction * dist)
-        //Vec4{v: self.origin.v} 
+        self.origin + self.direction * dist
     }
 }

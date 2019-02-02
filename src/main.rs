@@ -1,6 +1,6 @@
 pub mod strahl;
 
-//mod primitives;
+use crate::strahl::hit::Hitable;
 
 // pub fn dot_prod(a: &[f32], b: &[f32]) -> f32 {
 //     assert_eq!(a.len(), b.len());
@@ -21,29 +21,37 @@ extern crate image;
 use image::{GenericImage, ImageBuffer, imageops};
 
 fn main() {
-    //type Vec4 = vec::Vec4;
+    type Vec4 = strahl::vec::Vec4;
+    type Ray = strahl::ray::Ray;
+    type Sphere = strahl::primitives::Sphere;
+    type HitInfo = strahl::hit::HitInfo;
 
-    let mut v =  strahl::vec::Vec4::from(0.0, 0.0, 1.0);
-    let v2 =  strahl::vec::Vec4::from(1.0, 2.0, 3.0);
+    let mut v =  Vec4::from3(0.0, 0.0, 1.0);
+    let v2 =  Vec4::from3(1.0, 2.0, 3.0);
 
     let c1 = v.cross3_trimmed(&v2);
     let c2 = v.cross3_validate(&v2);
+
+    let c3 = c1 + c2 * 2.0;
 
     if c1 != c2
     {
         print!("hey!")
     }
 
-    //let s = primitives::Sphere::new(v, 1.0);
+
+    let test = Vec4::from(0.0);
+
+    let ray = Ray::new(test, Vec4::from3(0.0, 0.0, 1.0));
+    let p = ray.point_at(3.0);
+
+    let s = Sphere::new(v, 1.0);
+
+    let mut hit = HitInfo::new();
+    let didhit = s.hit(&ray, &mut hit, 0.0, 100.0);
 
     let width = 800;
     let height = 800;
-
-    // Create a new ImgBuf with width: imgx and height: imgy
-    //let mut imgbuf = RgbaImage::new(width as u32, height as u32);
-
-    //let mut imgbuf: image::ImageBuffer<image::Rgba<u8>, _> = image::ImageBuffer::new(width as u32, height as u32);
-    //let mut imgbuf: image::RgbaImage = image::ImageBuffer::new(width as u32, height as u32);
 
     let mut imgbuf = image::ImageBuffer::new(width, height);
 

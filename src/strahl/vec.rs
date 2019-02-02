@@ -1,7 +1,8 @@
 use packed_simd::{f32x4, shuffle, u32x4};
-use std::cmp::Eq;
+use std::cmp::PartialEq;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
+#[derive(Copy, Clone)]
 pub struct Vec4 {
     pub v: f32x4,
 }
@@ -13,7 +14,7 @@ impl Vec4 {
         }
     }
 
-    pub fn from(x: f32, y: f32, z: f32) -> Vec4 {
+    pub fn from3(x: f32, y: f32, z: f32) -> Vec4 {
         Vec4 {
             v: f32x4::new(x, y, z, 0.0),
         }
@@ -109,16 +110,18 @@ impl Vec4 {
         }
     }
 
-    // http://threadlocalmutex.com/?p=8
+    // this version also works with Vec4 if it was initialized using Vec4::from3() to null the w component
     pub fn cross3(&self, o: &Vec4) -> Vec4 {
-        let a_yzx = shuffle!(self.v, [1, 2, 0, 0]);
-        let b_yzx = shuffle!(o.v, [1, 2, 0, 0]);
+        // http://threadlocalmutex.com/?p=8
+        let a_yzx = shuffle!(self.v, [1, 2, 0, 3]);
+        let b_yzx = shuffle!(o.v, [1, 2, 0, 3]);
 
         Vec4 {
-            v: shuffle!(self.v * b_yzx - a_yzx * o.v, [1, 2, 0, 0])
+            v: shuffle!(self.v * b_yzx - a_yzx * o.v, [1, 2, 0, 3])
         }
     }
 
+    // null w component 
     pub fn cross3_trimmed(&self, o: &Vec4) -> Vec4 {
         let res = self.cross3(&o);
         Vec4{v: res.v.replace(3, 0.0)}
@@ -162,6 +165,12 @@ impl From<f32> for Vec4 {
     }
 }
 
+impl From<&f32> for Vec4 {
+    fn from(v: &f32) -> Self {
+        Vec4::new(*v, *v, *v, *v)
+    }
+}
+
 impl From<f32x4> for Vec4 {
     fn from(o: f32x4) -> Self {
         Vec4 { v: o }
@@ -188,11 +197,25 @@ impl Into<f32x4> for Vec4 {
 // Add
 //######################################################################
 
+impl Add<Vec4> for Vec4 {
+    type Output = Vec4;
+
+    fn add(self, o: Vec4) -> Vec4 {
+        Vec4 { v: self.v + o.v }
+    }
+}
+
 impl Add<&Vec4> for Vec4 {
     type Output = Vec4;
 
     fn add(self, o: &Vec4) -> Vec4 {
         Vec4 { v: self.v + o.v }
+    }
+}
+
+impl AddAssign<Vec4> for Vec4 {
+    fn add_assign(&mut self, o: Vec4) {
+        self.v += o.v
     }
 }
 
@@ -206,11 +229,25 @@ impl AddAssign<&Vec4> for Vec4 {
 // Sub
 //######################################################################
 
+impl Sub<Vec4> for Vec4 {
+    type Output = Vec4;
+
+    fn sub(self, o: Vec4) -> Vec4 {
+        Vec4 { v: self.v - o.v }
+    }
+}
+
 impl Sub<&Vec4> for Vec4 {
     type Output = Vec4;
 
     fn sub(self, o: &Vec4) -> Vec4 {
         Vec4 { v: self.v - o.v }
+    }
+}
+
+impl SubAssign<Vec4> for Vec4 {
+    fn sub_assign(&mut self, o: Vec4) {
+        self.v -= o.v
     }
 }
 
@@ -293,7 +330,7 @@ impl DivAssign<f32> for Vec4 {
 }
 
 //######################################################################
-// Equal
+// Copy
 //######################################################################
 
 impl PartialEq for Vec4 {
@@ -301,3 +338,7 @@ impl PartialEq for Vec4 {
         self.v == o.v
     }
 }
+
+//######################################################################
+// Equal
+//######################################################################
