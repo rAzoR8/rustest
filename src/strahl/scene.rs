@@ -42,8 +42,8 @@ impl Hitable for Scene
             match primitve 
             {
                 Primitive::SphereT{obj, mat} => { process_hit(obj, *mat); },
+                Primitive::PlaneT{obj, mat} => { process_hit(obj, *mat); },
                 _ => {}
-                //Primitive::PlaneT{obj, mat} => { process_hit(obj, mat); },
                 //Primitive::AABBT{obj, mat} => { process_hit(obj, mat); }
             }
         }

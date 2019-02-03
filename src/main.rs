@@ -1,20 +1,15 @@
 
-//#![feature(type_alias_enum_variants)]
-
 pub mod strahl;
-use crate::strahl::hit::Hitable;
+use crate::strahl::hit::*;
+use crate::strahl::primitives::*;
+use crate::strahl::scene::*;
+use crate::strahl::camera::*;
+use crate::strahl::ray::*;
+use crate::strahl::vec::*;
 
 extern crate image;
 
 use image::{ImageBuffer, imageops};
-
-type Vec4 = strahl::vec::Vec4;
-type Ray = strahl::ray::Ray;
-type Sphere = strahl::primitives::Sphere;
-type HitInfo = strahl::hit::HitInfo;
-type Camera = strahl::camera::Camera;
-type Scene = strahl::scene::Scene;
-//type Primitive = strahl::primitives::Primitive;
 
 fn color(ray: &Ray, scn: &Scene) -> Vec4
 {
@@ -34,11 +29,11 @@ fn color(ray: &Ray, scn: &Scene) -> Vec4
 fn main() {
     let mut world = Scene::new();
 
-    let sphere = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5);
+    let sphere = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(0);
+    let plane = Plane::new(Vec4::from3(0.0, 0.0, -10.0), Vec4::from3(-0.5, 0.0, -1.0).norm()).primitive(0); 
 
-    let s = strahl::primitives::Primitive::SphereT{obj: sphere, mat: 0};
-
-    world.add(s);
+    world.add(sphere);
+    world.add(plane);
 
     let width = 800;
     let height = 450;
