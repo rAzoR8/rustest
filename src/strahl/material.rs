@@ -99,13 +99,12 @@ impl Scatter for Emissive
 {
     fn scatter(&self, _r: &Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo, _out_ray: &mut Ray) -> bool
     {
-        let target = _hit.point + _hit.normal + random_in_unit_sphere();
-
-        *_out_ray = Ray::new(_hit.point, (target - _hit.point).norm());
+        // let target = _hit.point + _hit.normal + random_in_unit_sphere();
+        // *_out_ray = Ray::new(_hit.point, (target - _hit.point).norm());
 
         _out_mat.attenuation = Vec4::one();
         _out_mat.emission = self.emissive;
 
-        true
+        false
     }
 }

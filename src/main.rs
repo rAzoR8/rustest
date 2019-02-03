@@ -46,8 +46,8 @@ impl RayInfo
         {
             let cur = self.mat_info[(self.depth - i) as usize];
             //col *= cur.attenuation + cur.emission;
-            col += cur.emission;
             col *= cur.attenuation;
+            col += cur.emission;
         }
 
         col
@@ -109,16 +109,20 @@ fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
 fn main() {
     let mut world = Scene::new();
 
-    let lamb = world.add_mat(Lambertian::new(1.0, 0.9, 0.85).material());
-    let em = world.add_mat(Emissive::new(0.5, 0.1, 0.85).material());
+    let lamb = world.add_mat(Lambertian::new(0.5, 0.5, 0.5).material());
+    let em1 = world.add_mat(Emissive::new(10.0, 10.0, 10.0).material());
+    let em2 = world.add_mat(Emissive::new(10.0, 10.0, 100.0).material());
 
-    let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(em);
-    let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(lamb);
+
+    let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(lamb);
+    let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(em1);
+    let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.0, -1.0), 0.5).primitive(em2);
 
     //let plane = Plane::new(Vec4::from3(0.0, 0.0, -10.0), Vec4::from3(-0.5, 0.0, -1.0).norm()).primitive(0); 
 
     world.add(sphere1);
     world.add(sphere2);
+    world.add(sphere3);
 
     //world.add(plane);
 
@@ -126,7 +130,7 @@ fn main() {
     let height = 450;
     let sampels = 100;
 
-    let origin = Vec4::zero();
+    let origin = Vec4::from3(0.0, 0.0, 1.0);
     let target = Vec4::from3(0.0, 0.0, -1.0);
     let up = Vec4::from3(0.0, -1.0, 0.0);
 
@@ -144,7 +148,9 @@ fn main() {
 
         for _ in 0..sampels {
             
-            let (s, t) = random::random_tuple(-0.0, 1.0);
+            let (s, t) = random::random_tuple(-1.0, 1.0);
+            //let (s, t) = (0.0, 0.0);
+
             let u = (x as f32 + s) / width as f32;
             let v = (y as f32 + t) / height as f32;
             ray.reset(&cam.get_ray(u, v));

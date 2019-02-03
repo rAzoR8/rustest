@@ -18,6 +18,14 @@ pub fn random_in_unit_sphere() -> Vec4
 {
     let mut rng = rand::thread_rng();
 
+    // method 2
+    Vec4::from3(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0)).norm()
+}
+
+pub fn random_in_unit_sphere2() -> Vec4
+{
+    let mut rng = rand::thread_rng();
+
     //https://hbfs.wordpress.com/2010/10/12/random-points-on-a-sphere-generating-random-sequences-iii/
     //https://corysimon.github.io/articles/uniformdistn-on-sphere/
     let theta = (rng.gen_range(-1.0, 1.0) as f32).asin();
@@ -29,7 +37,4 @@ pub fn random_in_unit_sphere() -> Vec4
     let z = cos_theta * x;
 
     Vec4::from3(x, y , z)
-
-    // method 2
-    // Vec4::from3(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0).norm()
 }
