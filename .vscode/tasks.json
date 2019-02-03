@@ -15,6 +15,33 @@
             "problemMatcher": [
                 "$rustc"
             ]
+        },
+        {
+            "type": "cargo",
+            "label": "cargo release",
+            "command": "cargo",
+            "args": [
+                "run",
+                "--relase"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ]
+        },
+        {
+            "type": "cargo",
+            "label": "cargo build",
+            "command": "cargo",
+            "args": [
+                "build"
+            ],
+            "problemMatcher": [
+                "$rustc"
+            ]
         }
-    ]
+    ],
+    "group": {
+        "kind": "build",
+        "isDefault": true
+    }
 }

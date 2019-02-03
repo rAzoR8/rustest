@@ -2,6 +2,12 @@ use super::vec::*;
 use rand::prelude::*;
 use std::f32::consts::PI;
 
+pub fn random_tuple(min: f32, max: f32) -> (f32, f32)
+{
+    let mut rng = rand::thread_rng();
+    (rng.gen_range(min, max), rng.gen_range(min, max))
+}
+
 pub fn random_in_unit_disk() -> Vec4
 {
     let mut rng = rand::thread_rng();

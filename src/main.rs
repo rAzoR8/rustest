@@ -7,6 +7,7 @@ use crate::strahl::camera::*;
 use crate::strahl::ray::*;
 use crate::strahl::vec::*;
 use crate::strahl::material::*;
+use crate::strahl::random;
 
 extern crate image;
 
@@ -21,9 +22,9 @@ pub struct RayInfo
 
 impl RayInfo
 {
-    pub fn new(_ray: Ray) -> RayInfo
+    pub fn new() -> RayInfo
     {
-        RayInfo{ray: _ray, mat_info: [MaterialInfo::new(); 10], depth: 0}
+        RayInfo{ray: Ray::invalid(), mat_info: [MaterialInfo::new(); 10], depth: 0}
     }
 
     pub fn add_mat(&mut self, mat: &MaterialInfo)
@@ -44,10 +45,18 @@ impl RayInfo
         for i in 1..self.depth 
         {
             let cur = self.mat_info[(self.depth - i) as usize];
-            col *= (cur.emission + cur.attenuation);
+            //col *= cur.attenuation + cur.emission;
+            col += cur.emission;
+            col *= cur.attenuation;
         }
 
         col
+    }
+
+    pub fn reset(&mut self, ray: &Ray)
+    {
+        self.ray = *ray;
+        self.depth = 0;
     }
 }
 
@@ -68,14 +77,13 @@ fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
         }
         else
         {
-            let hit_mat = match scn.get_mat(hit.material)
-            {
-                Material::Lambertian {mat} => {mat}
-            };
-
             let mut scattered_ray = Ray::invalid();
 
-            let scattered = hit_mat.scatter(&r.ray, &hit, &mut mat_info, &mut scattered_ray);
+            let scattered = match scn.get_mat(hit.material)
+            {
+                Material::Lambertian {mat} => {mat.scatter(&r.ray, &hit, &mut mat_info, &mut scattered_ray)},
+                Material::Emissive {mat} => {mat.scatter(&r.ray, &hit, &mut mat_info, &mut scattered_ray)}
+            };
 
             if scattered
             {
@@ -91,6 +99,7 @@ fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
     {
         let t = 0.5 * (r.ray.direction.norm().y() + 1.0);
         mat_info.emission = Vec4::from(1.0-t) + t * Vec4::from3(0.5, 0.7, 1.0);
+        mat_info.attenuation = Vec4::one();
         r.add_mat(&mat_info);
 
         return true;
@@ -100,9 +109,10 @@ fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
 fn main() {
     let mut world = Scene::new();
 
-    let lamb = world.add_mat(Lambertian::new(0.5, 0.1, 0.0).material());
+    let lamb = world.add_mat(Lambertian::new(1.0, 0.9, 0.85).material());
+    let em = world.add_mat(Emissive::new(0.5, 0.1, 0.85).material());
 
-    let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(lamb);
+    let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(em);
     let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(lamb);
 
     //let plane = Plane::new(Vec4::from3(0.0, 0.0, -10.0), Vec4::from3(-0.5, 0.0, -1.0).norm()).primitive(0); 
@@ -114,6 +124,7 @@ fn main() {
 
     let width = 800;
     let height = 450;
+    let sampels = 100;
 
     let origin = Vec4::zero();
     let target = Vec4::from3(0.0, 0.0, -1.0);
@@ -123,25 +134,49 @@ fn main() {
 
     let mut imgbuf = image::ImageBuffer::new(width, height);
 
+    let mut last_y = 0;
+    let mut ray_count = 0;
+
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        let u = x as f32 / width as f32;
-        let v = y as f32 / height as f32;
 
-        let mut ray = RayInfo::new(cam.get_ray(u, v));
+        let mut ray = RayInfo::new();
+        let mut col = Vec4::zero();
 
-        for depth in 0..10 {
-            if trace(&mut ray, &world, false)
-            {
-                break;
+        for _ in 0..sampels {
+            
+            let (s, t) = random::random_tuple(-0.0, 1.0);
+            let u = (x as f32 + s) / width as f32;
+            let v = (y as f32 + t) / height as f32;
+            ray.reset(&cam.get_ray(u, v));
+
+            for depth in 0..10 {
+                if trace(&mut ray, &world, false)
+                {
+                    break;
+                }
             }
+
+            col += ray.accumulate();
+            ray_count += ray.depth;
         }
 
-        let col = ray.accumulate() * 255.99;
+        col /= sampels as f32;
 
-        let r = col.r() as u8;
-        let g = col.g() as u8;
-        let b = col.b() as u8;
+        let final_color = col * 255.99;
+
+        // todo: gamma corret
+
+        let r = final_color.r().sqrt() as u8;
+        let g = final_color.g().sqrt() as u8;
+        let b = final_color.b().sqrt() as u8;
         *pixel = image::Rgb([r, g, b]);
+
+        if y != last_y
+        {
+            last_y = y;
+            let percent = (y * 100) as f32 / height as f32;
+            print!("Progress {} \t Rays {} \n", percent, ray_count);
+        }
     }
 
     imgbuf.save("test.png").unwrap();

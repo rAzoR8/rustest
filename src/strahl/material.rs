@@ -28,6 +28,12 @@ pub struct Lambertian
     pub albedo: Vec4
 }
 
+#[derive(Copy, Clone)]
+pub struct Emissive
+{
+    pub emissive: Vec4
+}
+
 pub trait Scatter
 {
     fn scatter(&self, _r: &Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo, _out_ray: &mut Ray) -> bool;
@@ -36,7 +42,8 @@ pub trait Scatter
 #[derive(Copy, Clone)]
 pub enum Material
 {
-    Lambertian {mat: Lambertian}
+    Lambertian {mat: Lambertian},
+    Emissive {mat: Emissive}
 }
 
 //######################################################################
@@ -66,6 +73,38 @@ impl Scatter for Lambertian
 
         _out_mat.attenuation = self.albedo;
         _out_mat.emission = Vec4::zero();
+
+        true
+    }
+}
+
+//######################################################################
+// Emissive
+//######################################################################
+
+impl Emissive
+{
+    pub fn new(r: f32, g: f32, b: f32) -> Emissive
+    {
+        Emissive{emissive: Vec4::from3(r, g, b)}
+    }
+
+    pub fn material(&self) -> Material
+    {
+        Material::Emissive {mat: *self}
+    }
+}
+
+impl Scatter for Emissive
+{
+    fn scatter(&self, _r: &Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo, _out_ray: &mut Ray) -> bool
+    {
+        let target = _hit.point + _hit.normal + random_in_unit_sphere();
+
+        *_out_ray = Ray::new(_hit.point, (target - _hit.point).norm());
+
+        _out_mat.attenuation = Vec4::one();
+        _out_mat.emission = self.emissive;
 
         true
     }
