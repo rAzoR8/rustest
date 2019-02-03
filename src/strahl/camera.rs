@@ -1,6 +1,6 @@
 use super::vec::*;
 use super::ray::*;
-use rand::prelude::*;
+use super::random::*;
 use std::f32::consts::PI;
 
 pub struct Camera
@@ -47,31 +47,9 @@ impl Camera
         }
     }
 
-    pub fn random_in_unit_disk() -> Vec4
-    {
-        let mut rng = rand::thread_rng();
-
-        loop 
-        {
-            let p = 2.0 * Vec4::from3(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), 0.0) - Vec4::from3(1.0, 1.0, 0.0);
-            if p.square_length() <= 1.0 { return p;}
-        }
-    }
-
-    pub fn random_in_unit_sphere() -> Vec4
-    {
-        let mut rng = rand::thread_rng();
-
-        loop 
-        {
-            let p = 2.0 * Vec4::from3(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0)) - Vec4::one();
-            if p.square_length() <= 1.0 { return p;}
-        }
-    }
-
     pub fn get_random_ray(&self, s: f32, t: f32) -> Ray
     {
-        let offset = self.lense_radius * Camera::random_in_unit_disk();
+        let offset = self.lense_radius * random_in_unit_disk();
 
         Ray
         {

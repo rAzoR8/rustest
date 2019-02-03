@@ -366,7 +366,7 @@ impl Sub<&Vec4> for f32 {
 }
 
 //######################################################################
-// Mul
+// Mul Vec4 x Vec4
 //######################################################################
 
 impl Mul<&Vec4> for Vec4 {
@@ -377,11 +377,29 @@ impl Mul<&Vec4> for Vec4 {
     }
 }
 
+impl Mul<Vec4> for Vec4 {
+    type Output = Vec4;
+
+    fn mul(self, o: Vec4) -> Vec4 {
+        Vec4 { v: self.v * o.v }
+    }
+}
+
 impl MulAssign<&Vec4> for Vec4 {
     fn mul_assign(&mut self, o: &Vec4) {
         self.v *= o.v
     }
 }
+
+impl MulAssign<Vec4> for Vec4 {
+    fn mul_assign(&mut self, o: Vec4) {
+        self.v *= o.v
+    }
+}
+
+//######################################################################
+// Mul Vec4 x f32
+//######################################################################
 
 impl Mul<f32> for Vec4 {
     type Output = Vec4;
@@ -423,6 +441,12 @@ impl MulAssign<f32> for Vec4 {
     }
 }
 
+impl MulAssign<&f32> for Vec4 {
+    fn mul_assign(&mut self, o: &f32) {
+        self.v *= *o
+    }
+}
+
 //######################################################################
 // Div
 //######################################################################
@@ -452,6 +476,12 @@ impl Div<f32> for Vec4 {
 impl DivAssign<f32> for Vec4 {
     fn div_assign(&mut self, o: f32) {
         self.v /= o
+    }
+}
+
+impl DivAssign<&f32> for Vec4 {
+    fn div_assign(&mut self, o: &f32) {
+        self.v /= *o
     }
 }
 

@@ -1,23 +1,36 @@
 use super::primitives::*;
+use super::material::*;
 use super::hit::*;
 use super::ray::*;
 use std::vec::*;
 
 pub struct Scene
 {
-    pub container: std::vec::Vec<Primitive>
+    pub primitives: std::vec::Vec<Primitive>,
+    pub materials: std::vec::Vec<Material>
 }
 
 impl Scene
 {
     pub fn new() -> Scene
     {
-        Scene{container: std::vec::Vec::new()}
+        Scene{primitives: std::vec::Vec::new(), materials: std::vec::Vec::new()}
     }
 
     pub fn add(&mut self, obj: Primitive)
     {
-        self.container.push(obj);
+        self.primitives.push(obj);
+    }
+
+    pub fn add_mat(&mut self, mat: Material) -> u32
+    {
+        self.materials.push(mat);
+        (self.materials.len() - 1) as u32
+    }
+
+    pub fn get_mat(&self, mat: u32) -> &Material
+    {
+        &self.materials[(mat as usize)]
     }
 }
 
@@ -38,7 +51,7 @@ impl Hitable for Scene
             }
         };
 
-        for primitve in self.container.iter() {
+        for primitve in self.primitives.iter() {
             match primitve 
             {
                 Primitive::SphereT{obj, mat} => { process_hit(obj, *mat); },

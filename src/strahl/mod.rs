@@ -7,6 +7,8 @@ pub mod hit;
 pub mod primitives;
 pub mod camera;
 pub mod scene;
+pub mod material;
+pub mod random;
 
 //pub use strahl::vec::Vec4;
 //pub use strahl::ray::Ray;

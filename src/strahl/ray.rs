@@ -1,5 +1,6 @@
 use super::vec::*;
 
+#[derive(Copy, Clone)]
 pub struct Ray {
     pub origin: Vec4,
     pub direction: Vec4
@@ -13,8 +14,15 @@ impl Ray {
         }
     }
 
-    pub fn point_at(&self, dist: f32) -> Vec4
+    pub fn invalid() -> Ray {
+        Ray {
+            origin: Vec4::zero(),
+            direction: Vec4::zero()
+        }
+    }
+
+    pub fn point_at(&self, _dist: f32) -> Vec4
     {
-        self.origin + self.direction * dist
+        self.origin + self.direction * _dist
     }
 }
