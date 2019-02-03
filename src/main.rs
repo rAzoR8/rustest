@@ -15,14 +15,39 @@ use image::{ImageBuffer, imageops};
 pub struct RayInfo
 {
     pub ray: Ray,
-    pub color: Vec4
+    pub mat_info: [MaterialInfo; 10],
+    pub depth: u32
 }
 
 impl RayInfo
 {
     pub fn new(_ray: Ray) -> RayInfo
     {
-        RayInfo{ray: _ray, color: Vec4::zero()}
+        RayInfo{ray: _ray, mat_info: [MaterialInfo::new(); 10], depth: 0}
+    }
+
+    pub fn add_mat(&mut self, mat: &MaterialInfo)
+    {
+        if self.depth < 10
+        {
+            self.mat_info[self.depth as usize] = *mat;
+            self.depth += 1;
+        }
+    }
+
+    pub fn accumulate(&self) -> Vec4
+    {
+        if self.depth == 0 { return Vec4::zero();}
+
+        let mut col = (self.mat_info[(self.depth - 1) as usize]).emission;
+
+        for i in 1..self.depth 
+        {
+            let cur = self.mat_info[(self.depth - i) as usize];
+            col *= (cur.emission + cur.attenuation);
+        }
+
+        col
     }
 }
 
@@ -30,13 +55,16 @@ impl RayInfo
 fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
 {
     let mut hit = HitInfo::new();
+    let mut mat_info = MaterialInfo::new();
 
     if scn.hit(&r.ray, &mut hit, 0.0, 100.0)
     {
         if normal
-        {
-            r.color = (hit.normal + 1.0) * 0.5;
-            return true;
+        {            
+            mat_info.attenuation = (hit.normal + 1.0) * 0.5; 
+            r.add_mat(&mat_info);
+
+            return true; // terminated
         }
         else
         {
@@ -45,7 +73,6 @@ fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
                 Material::Lambertian {mat} => {mat}
             };
 
-            let mut mat_info = MaterialInfo::new();
             let mut scattered_ray = Ray::invalid();
 
             let scattered = hit_mat.scatter(&r.ray, &hit, &mut mat_info, &mut scattered_ray);
@@ -53,17 +80,19 @@ fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
             if scattered
             {
                 r.ray = scattered_ray;
-                r.color *= mat_info.attenuation;
-                r.color += mat_info.emission;
             }
 
-            return scattered;            
+            r.add_mat(&mat_info);
+
+            return !scattered;            
         }
     }
     else // background
     {
         let t = 0.5 * (r.ray.direction.norm().y() + 1.0);
-        r.color = Vec4::from(1.0-t) + t * Vec4::from3(0.5, 0.7, 1.0);
+        mat_info.emission = Vec4::from(1.0-t) + t * Vec4::from3(0.5, 0.7, 1.0);
+        r.add_mat(&mat_info);
+
         return true;
     }
 }
@@ -107,7 +136,7 @@ fn main() {
             }
         }
 
-        let col = ray.color * 255.99;
+        let col = ray.accumulate() * 255.99;
 
         let r = col.r() as u8;
         let g = col.g() as u8;
@@ -116,4 +145,6 @@ fn main() {
     }
 
     imgbuf.save("test.png").unwrap();
+
+    print!("done!");
 }
