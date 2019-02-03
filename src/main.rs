@@ -1,3 +1,6 @@
+
+//#![feature(type_alias_enum_variants)]
+
 pub mod strahl;
 use crate::strahl::hit::Hitable;
 
@@ -10,12 +13,14 @@ type Ray = strahl::ray::Ray;
 type Sphere = strahl::primitives::Sphere;
 type HitInfo = strahl::hit::HitInfo;
 type Camera = strahl::camera::Camera;
+type Scene = strahl::scene::Scene;
+//type Primitive = strahl::primitives::Primitive;
 
-fn color(ray: &Ray, obj: &Hitable) -> Vec4
+fn color(ray: &Ray, scn: &Scene) -> Vec4
 {
     let mut hit = HitInfo::new();
 
-    if obj.hit(&ray, &mut hit, 0.0, 100.0)
+    if scn.hit(&ray, &mut hit, 0.0, 100.0)
     {
         return (hit.normal + 1.0) * 0.5;
     }
@@ -27,7 +32,13 @@ fn color(ray: &Ray, obj: &Hitable) -> Vec4
 }
 
 fn main() {
-    let s = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5);
+    let mut world = Scene::new();
+
+    let sphere = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5);
+
+    let s = strahl::primitives::Primitive::SphereT{obj: sphere, mat: 0};
+
+    world.add(s);
 
     let width = 800;
     let height = 450;
@@ -46,7 +57,7 @@ fn main() {
 
         let ray = cam.get_ray(u, v);
 
-        let col = color(&ray, &s) * 255.99;
+        let col = color(&ray, &world) * 255.99;
 
         let r = col.r() as u8;
         let g = col.g() as u8;

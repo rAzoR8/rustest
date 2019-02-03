@@ -8,6 +8,29 @@ pub struct Sphere
     radius: f32
 }
 
+pub struct Plane
+{
+    pos: Vec4,
+    normal: Vec4
+}
+
+pub struct AABB
+{
+    min: Vec4,
+    max: Vec4
+}
+
+pub enum Primitive
+{
+    SphereT {obj: Sphere, mat: u32},
+    PlaneT {obj: Plane, mat: u32},
+    AABBT {obj: AABB, mat: u32}
+}
+
+//######################################################################
+// Hitable Impls
+//######################################################################
+
 impl Sphere
 {
     pub fn new(_pos: Vec4, _radius: f32) -> Sphere
