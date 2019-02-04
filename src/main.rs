@@ -167,8 +167,7 @@ fn main() {
 
         for _ in 0..sampels {
             
-            let (s, t) = random::random_tuple(-1.0, 1.0);
-            //let (s, t) = (0.0, 0.0);
+            let (s, t) = random::random_in_unit_disk2();
 
             let u = (x as f32 + s) / width as f32;
             let v = (y as f32 + t) / height as f32;
