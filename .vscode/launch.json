@@ -9,7 +9,7 @@
             "name": "(Windows) Launch debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "preLaunchTask": "cargo run",
+            //"preLaunchTask": "cargo run",
             "program": "${workspaceFolder}/target/debug/strahl.exe",
             "args": [],
             "stopAtEntry": false,
@@ -17,17 +17,17 @@
             "environment": [],
             "externalConsole": true
         },
-        {
-            "name": "(Windows) Launch release",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "preLaunchTask": "cargo run",
-            "program": "${workspaceFolder}/target/release/strahl.exe",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": true
-        }
+        // {
+        //     "name": "(Windows) Launch release",
+        //     "type": "cppvsdbg",
+        //     "request": "launch",
+        //     "preLaunchTask": "cargo run",
+        //     "program": "${workspaceFolder}/target/release/strahl.exe",
+        //     "args": [],
+        //     "stopAtEntry": false,
+        //     "cwd": "${workspaceFolder}",
+        //     "environment": [],
+        //     "externalConsole": true
+        // }
     ]
 }

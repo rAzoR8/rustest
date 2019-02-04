@@ -15,9 +15,9 @@ use image::{ImageBuffer, imageops};
 
 pub struct RayInfo
 {
+    pub depth: u32,
     pub ray: Ray,
-    pub mat_info: [MaterialInfo; 10],
-    pub depth: u32
+    pub mat_info: [MaterialInfo; 10]
 }
 
 impl RayInfo
@@ -42,10 +42,9 @@ impl RayInfo
 
         let mut col = (self.mat_info[(self.depth - 1) as usize]).emission;
 
-        for i in 1..self.depth 
+        for i in 2..self.depth+1
         {
             let cur = self.mat_info[(self.depth - i) as usize];
-            //col *= cur.attenuation + cur.emission;
             col *= cur.attenuation;
             col += cur.emission;
         }
@@ -82,7 +81,8 @@ fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
             let scattered = match scn.get_mat(hit.material)
             {
                 Material::Lambertian {mat} => {mat.scatter(&r.ray, &hit, &mut mat_info, &mut scattered_ray)},
-                Material::Emissive {mat} => {mat.scatter(&r.ray, &hit, &mut mat_info, &mut scattered_ray)}
+                Material::Emissive {mat} => {mat.scatter(&r.ray, &hit, &mut mat_info, &mut scattered_ray)},
+                Material::Metal {mat} => {mat.scatter(&r.ray, &hit, &mut mat_info, &mut scattered_ray)}
             };
 
             if scattered
@@ -106,28 +106,47 @@ fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
     }
 }
 
+#[cfg(debug_assertions)]
+fn debug_divisior() -> u32 {
+    4
+}
+
+#[cfg(not(debug_assertions))]
+fn debug_divisior() -> u32 {
+    1
+}
+
 fn main() {
     let mut world = Scene::new();
 
-    let lamb = world.add_mat(Lambertian::new(0.5, 0.5, 0.5).material());
+    let lamb1 = world.add_mat(Lambertian::new(0.8, 0.3, 0.3).material());
+    let lamb2 = world.add_mat(Lambertian::new(0.8, 0.8, 0.0).material());
+
     let em1 = world.add_mat(Emissive::new(10.0, 10.0, 10.0).material());
     let em2 = world.add_mat(Emissive::new(10.0, 10.0, 100.0).material());
+    let metal1 = world.add_mat(Metal::new(0.8, 0.6, 0.2, 0.0).material());
+    let metal2 = world.add_mat(Metal::new(0.8, 0.8, 1.8, 0.0).material());
 
-
-    let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(lamb);
-    let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(em1);
-    let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.0, -1.0), 0.5).primitive(em2);
+    let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(lamb1);
+    let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(lamb2);
+    //let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.0, -1.0), 0.5).primitive(em2);
+    let sphere4 = Sphere::new(Vec4::from3(1.0, 0.0, -1.0), 0.3).primitive(metal1);
+    let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(metal2);
 
     //let plane = Plane::new(Vec4::from3(0.0, 0.0, -10.0), Vec4::from3(-0.5, 0.0, -1.0).norm()).primitive(0); 
 
     world.add(sphere1);
     world.add(sphere2);
-    world.add(sphere3);
+    //world.add(sphere3);
+    world.add(sphere4);
+    world.add(sphere5);
 
     //world.add(plane);
 
-    let width = 800;
-    let height = 450;
+    let debug = debug_divisior();
+
+    let width = 800 / debug;
+    let height = 450 / debug;
     let sampels = 100;
 
     let origin = Vec4::from3(0.0, 0.0, 1.0);
@@ -172,9 +191,9 @@ fn main() {
 
         // todo: gamma corret
 
-        let r = final_color.r().sqrt() as u8;
-        let g = final_color.g().sqrt() as u8;
-        let b = final_color.b().sqrt() as u8;
+        let r = final_color.r() as u8;
+        let g = final_color.g() as u8;
+        let b = final_color.b() as u8;
         *pixel = image::Rgb([r, g, b]);
 
         if y != last_y
