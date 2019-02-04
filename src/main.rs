@@ -1,4 +1,7 @@
 
+extern crate image;
+extern crate rayon;
+
 pub mod strahl;
 use crate::strahl::hit::*;
 use crate::strahl::primitives::*;
@@ -9,9 +12,8 @@ use crate::strahl::vec::*;
 use crate::strahl::material::*;
 use crate::strahl::random;
 
-extern crate image;
-
 use image::{ImageBuffer, imageops};
+use rayon::prelude::*;
 
 pub struct RayInfo
 {
@@ -160,47 +162,54 @@ fn main() {
     let mut last_y = 0;
     let mut ray_count = 0;
 
-    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+    let pool = rayon::ThreadPoolBuilder::new().num_threads(8).build().unwrap();
 
-        let mut ray = RayInfo::new();
-        let mut col = Vec4::zero();
+    let mut scan_line = |y: u32|
+    {
+        let mut ray = RayInfo::new();        
 
-        for _ in 0..sampels {
+        for x in 0..width
+        {       
+            let mut col = Vec4::zero();
             
-            let (s, t) = random::random_in_unit_disk2();
+            for _ in 0..sampels {
+                
+                let (s, t) = random::random_in_unit_disk2();
 
-            let u = (x as f32 + s) / width as f32;
-            let v = (y as f32 + t) / height as f32;
-            ray.reset(&cam.get_ray(u, v));
+                let u = (x as f32 + s) / width as f32;
+                let v = (y as f32 + t) / height as f32;
+                ray.reset(&cam.get_ray(u, v));
 
-            for depth in 0..10 {
-                if trace(&mut ray, &world, false)
-                {
-                    break;
+                for depth in 0..10 {
+                    if trace(&mut ray, &world, false)
+                    {
+                        break;
+                    }
                 }
+
+                col += ray.accumulate();
+                ray_count += ray.depth;
             }
 
-            col += ray.accumulate();
-            ray_count += ray.depth;
-        }
+            col /= sampels as f32;
 
-        col /= sampels as f32;
+            let final_color = col * 255.99;
 
-        let final_color = col * 255.99;
+            // todo: gamma corret
 
-        // todo: gamma corret
+            let r = final_color.r() as u8;
+            let g = final_color.g() as u8;
+            let b = final_color.b() as u8;
+            imgbuf.put_pixel(x, y, image::Rgb([r, g, b]));
 
-        let r = final_color.r() as u8;
-        let g = final_color.g() as u8;
-        let b = final_color.b() as u8;
-        *pixel = image::Rgb([r, g, b]);
-
-        if y != last_y
-        {
-            last_y = y;
             let percent = (y * 100) as f32 / height as f32;
-            print!("Progress {} \t Rays {} \n", percent, ray_count);
+            print!("Thread {} Progress {} \t Rays {} \n", y, percent, ray_count);            
         }
+    };
+
+    for y in 0..height
+    {
+        pool.install(|| scan_line(y));
     }
 
     imgbuf.save("test.png").unwrap();
