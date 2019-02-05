@@ -25,7 +25,7 @@ impl Camera
         let half_width = ((_width as f32) / (_height as f32)) * half_height;
         let _w = (origin - target).norm();
         let _u = (up.cross3(&_w)).norm();
-        let _v = _w.cross3(&_u);
+        let _v = _u.cross3(&_w);
 
         Camera
         {

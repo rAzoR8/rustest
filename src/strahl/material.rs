@@ -135,9 +135,14 @@ impl Scatter for Metal
 {
     fn scatter(&self, _r: &Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo, _out_ray: &mut Ray) -> bool
     {
-        let target = _r.direction.reflect(&_hit.normal) + self.roughness * random_in_unit_sphere();
+        let mut target = _r.direction.reflect(&_hit.normal);
+        
+        if self.roughness > 0.0
+        {
+            target += self.roughness * random_in_unit_sphere();
+        }  
 
-        *_out_ray = Ray::new(_hit.point, (target - _hit.point).norm());
+        *_out_ray = Ray::new(_hit.point, target.norm());
 
         _out_mat.attenuation = self.albedo;
         _out_mat.emission = Vec4::zero();

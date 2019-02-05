@@ -163,14 +163,14 @@ fn main() {
 
     let em1 = world.add_mat(Emissive::new(10.0, 10.0, 10.0).material());
     let em2 = world.add_mat(Emissive::new(10.0, 10.0, 100.0).material());
-    let metal1 = world.add_mat(Metal::new(0.8, 0.6, 0.2, 0.0).material());
+    let metal1 = world.add_mat(Metal::new(1.0, 0.0, 0.0, 0.0).material()); // red
     let metal2 = world.add_mat(Metal::new(0.8, 0.8, 1.8, 0.0).material());
 
     let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(lamb1);
     let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(lamb2);
     //let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.0, -1.0), 0.5).primitive(em2);
-    let sphere4 = Sphere::new(Vec4::from3(1.0, 0.0, -1.0), 0.3).primitive(lamb1);
-    let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(lamb2);
+    let sphere4 = Sphere::new(Vec4::from3(1.0, 0.5, -1.0), 0.3).primitive(metal1); // right one
+    let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(metal2);
 
     //let plane = Plane::new(Vec4::from3(0.0, 0.0, -10.0), Vec4::from3(-0.5, 0.0, -1.0).norm()).primitive(0); 
 
@@ -188,9 +188,9 @@ fn main() {
     let height = 450 / debug;
     let samples = 100;
 
-    let origin = Vec4::from3(0.0, 0.0, 1.0);
+    let origin = Vec4::from3(0.0, 1.0, 1.0);
     let target = Vec4::from3(0.0, 0.0, -1.0);
-    let up = Vec4::from3(0.0, -1.0, 0.0);
+    let up = Vec4::from3(0.0, 1.0, 0.0);
 
     let cam = Camera::new(origin, target, up, 60.0, width, height, 0.0, 100.0);
 
