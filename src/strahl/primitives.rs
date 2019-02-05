@@ -26,9 +26,9 @@ pub struct AABB
 #[derive(Copy, Clone)]
 pub enum Primitive
 {
-    SphereT {obj: Sphere, mat: u32},
-    PlaneT {obj: Plane, mat: u32},
-    AABBT {obj: AABB, mat: u32}
+    Sphere {obj: Sphere, mat: u32},
+    Plane {obj: Plane, mat: u32},
+    AABB {obj: AABB, mat: u32}
 }
 
 //######################################################################
@@ -44,7 +44,7 @@ impl Sphere
 
     pub fn primitive(&self, _mat: u32) -> Primitive
     {
-        Primitive::SphereT{obj: *self, mat: _mat}
+        Primitive::Sphere{obj: *self, mat: _mat}
     }
 }
 
@@ -101,7 +101,7 @@ impl Plane
 
     pub fn primitive(&self, _mat: u32) -> Primitive
     {
-        Primitive::PlaneT{obj: *self, mat: _mat}
+        Primitive::Plane{obj: *self, mat: _mat}
     }
 }
 

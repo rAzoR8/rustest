@@ -12,15 +12,17 @@ pub struct Camera
     pub lense_radius: f32,
     pub lower_left_corner: Vec4,
     pub horizontal: Vec4,
-    pub vertical: Vec4
+    pub vertical: Vec4,
+    pub width: u32,
+    pub height: u32
 }
 
 impl Camera 
 {
-    pub fn new(origin: Vec4, target: Vec4, up: Vec4, fovy: f32, aspect: f32,  lense_diameter: f32, far: f32) -> Camera
+    pub fn new(origin: Vec4, target: Vec4, up: Vec4, fovy: f32, _width: u32, _height: u32,  lense_diameter: f32, far: f32) -> Camera
     {
         let half_height = (fovy*PI/360.0).tan();
-        let half_width = aspect * half_height;
+        let half_width = ((_width as f32) / (_height as f32)) * half_height;
         let _w = (origin - target).norm();
         let _u = (up.cross3(&_w)).norm();
         let _v = _w.cross3(&_u);
@@ -34,7 +36,9 @@ impl Camera
             lense_radius: lense_diameter / 2.0,
             lower_left_corner: origin - half_width*far*_u -half_height*far*_v - far*_w,
             horizontal: 2.0*half_width*far*_u,
-            vertical: 2.0*half_height*far*_v
+            vertical: 2.0*half_height*far*_v,
+            width: _width,
+            height: _height
         }
     }
 

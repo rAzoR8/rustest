@@ -54,8 +54,8 @@ impl Hitable for Scene
         for primitve in self.primitives.iter() {
             match primitve 
             {
-                Primitive::SphereT{obj, mat} => { process_hit(obj, *mat); },
-                Primitive::PlaneT{obj, mat} => { process_hit(obj, *mat); },
+                Primitive::Sphere{obj, mat} => { process_hit(obj, *mat); },
+                Primitive::Plane{obj, mat} => { process_hit(obj, *mat); },
                 _ => {}
                 //Primitive::AABBT{obj, mat} => { process_hit(obj, mat); }
             }
