@@ -1,3 +1,4 @@
+#![feature(duration_as_u128)]
 
 extern crate image;
 extern crate rayon;
@@ -15,7 +16,9 @@ use crate::strahl::random;
 use image::{ImageBuffer, imageops};
 use rayon::prelude::*;
 
-const MAX_DEPTH : usize = 10;
+use std::time::{Duration, SystemTime};
+
+const MAX_DEPTH : usize = 20;
 
 pub struct RayInfo
 {
@@ -23,6 +26,8 @@ pub struct RayInfo
     pub ray: Ray,
     pub mat_info: [MaterialInfo; MAX_DEPTH]
 }
+
+type ScanLine = std::vec::Vec<image::Rgb<u8>>;
 
 impl RayInfo
 {
@@ -44,9 +49,9 @@ impl RayInfo
     {
         if self.depth == 0 { return Vec4::zero();}
 
-        let mut col = (self.mat_info[(self.depth - 1) as usize]).emission;
+        let mut col = Vec4::zero();
 
-        for i in 2..self.depth+1
+        for i in 1..self.depth+1
         {
             let cur = self.mat_info[(self.depth - i) as usize];
             col *= cur.attenuation;
@@ -103,6 +108,7 @@ fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
     {
         let t = 0.5 * (r.ray.direction.norm().y() + 1.0);
         mat_info.emission = Vec4::from(1.0-t) + t * Vec4::from3(0.5, 0.7, 1.0);
+        mat_info.emission *= 0.5;
         mat_info.attenuation = Vec4::one();
         r.add_mat(&mat_info);
 
@@ -159,17 +165,17 @@ fn main() {
     let mut world = Scene::new();
 
     let lamb1 = world.add_mat(Lambertian::new(0.8, 0.3, 0.3).material());
-    let lamb2 = world.add_mat(Lambertian::new(0.8, 0.8, 0.0).material());
+    let lamb2 = world.add_mat(Lambertian::new(0.1, 0.1, 0.0).material());
 
     let em1 = world.add_mat(Emissive::new(10.0, 10.0, 10.0).material());
-    let em2 = world.add_mat(Emissive::new(10.0, 10.0, 100.0).material());
+    let em2 = world.add_mat(Emissive::new(1.0, 1.0, 1.0).material());
     let metal1 = world.add_mat(Metal::new(1.0, 0.0, 0.0, 0.0).material()); // red
-    let metal2 = world.add_mat(Metal::new(0.8, 0.8, 1.8, 0.0).material());
+    let metal2 = world.add_mat(Metal::new(1.0, 1.0, 1.0, 1.3).material());
 
     let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(lamb1);
     let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(lamb2);
     //let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.0, -1.0), 0.5).primitive(em2);
-    let sphere4 = Sphere::new(Vec4::from3(1.0, 0.5, -1.0), 0.3).primitive(metal1); // right one
+    let sphere4 = Sphere::new(Vec4::from3(1.0, 0.0, -1.0), 0.3).primitive(em2); // right one
     let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(metal2);
 
     //let plane = Plane::new(Vec4::from3(0.0, 0.0, -10.0), Vec4::from3(-0.5, 0.0, -1.0).norm()).primitive(0); 
@@ -198,28 +204,51 @@ fn main() {
 
     let mut ray_count = 0;
 
-    let pool = rayon::ThreadPoolBuilder::new().num_threads(8).build().unwrap();
+    //let pool = rayon::ThreadPoolBuilder::new().num_threads(8).build().unwrap();
 
-    let mut scan_line = |y: u32|
+    let mut trace_scan_line = |y: u32| // -> ScanLine
     {
+        //let mut scan_line = ScanLine::new();
+        //scan_line.reserve(width as usize);
+
+        let scan_time = SystemTime::now();
         let mut ray = RayInfo::new();        
 
+        let mut local_ray_count = 0;
         for x in 0..width
-        {       
-            imgbuf.put_pixel(x, y, color(&world, &cam, x, y, &mut ray, samples, &mut ray_count));
-
-            let percent = (y * 100) as f32 / height as f32;
-            print!("Thread {} Progress {} \t Rays {} \n", y, percent, ray_count);            
+        {  
+            imgbuf.put_pixel(x, y, color(&world, &cam, x, y, &mut ray, samples, &mut local_ray_count));         
         }
+
+        ray_count += local_ray_count;
+
+        let duration = scan_time.elapsed().unwrap().as_micros();
+
+        let speed = local_ray_count as f64 / duration as f64;
+
+        let percent = (y * 100) as f32 / height as f32;
+        print!("Y {} Progress {} \t Rays {} {} MRay/s \n", y, percent, ray_count, speed as f32);
+
+        //scan_line
     };
 
-    for y in 0..height
-    {
-         scan_line(y);
-        //pool.install(|| scan_line(y));
+    let total_time = SystemTime::now();
+
+    for y in 0..height  {
+        trace_scan_line(y);
     }
+
+    // (0..height).into_par_iter().for_each(|y| 
+    // {
+    //     trace_scan_line(y);
+    // }
+    // );
+
+    let duration = total_time.elapsed().unwrap().as_micros();
+
+    let speed = ray_count as f64 / duration as f64;
+    print!("saving... Avg {} MRay/s", speed as f32);
 
     imgbuf.save("test.png").unwrap();
 
-    print!("done!");
 }

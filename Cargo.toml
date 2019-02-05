@@ -6,6 +6,6 @@ edition = "2018"
 
 [dependencies]
 packed_simd = "*"
-rayon = "1.0.3"
+rayon = "*"
 image = "*"
 rand = "*"
