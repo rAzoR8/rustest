@@ -5,7 +5,8 @@ authors = ["Fabian Wahlster <wahlster@ux3d.io>"]
 edition = "2018"
 
 [dependencies]
-packed_simd = "*"
+packed_simd = { version="*", features=["into_bits"]}
 rayon = "*"
 image = "*"
 rand = "*"
+

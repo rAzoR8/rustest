@@ -142,11 +142,11 @@ pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, 
 
     col /= samples as f32;
 
-    // todo: gamma correct
+    let final_color = col.sqrt();
 
-    let r = (col.r().sqrt() * 255.99) as u8;
-    let g = (col.g().sqrt() * 255.99) as u8;
-    let b = (col.b().sqrt() * 255.99) as u8;
+    let r = (final_color.r() * 255.99) as u8;
+    let g = (final_color.g() * 255.99) as u8;
+    let b = (final_color.b() * 255.99) as u8;
 
     image::Rgb([r, g, b])
 }

@@ -1,4 +1,8 @@
-use packed_simd::{f32x4, shuffle, u32x4};
+//#[cfg(feature = "into_bits")]
+//use packed_simd::*;
+//use packed_simd::{f32x4, shuffle, u32x4};
+use packed_simd::{f32x4, shuffle, u32x4, FromBits};
+
 use std::cmp::PartialEq;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
@@ -151,6 +155,34 @@ impl Vec4 {
     pub fn reflect(&self, n: &Vec4) -> Vec4
     {
         self.sub(2.0 * self.dot(n) * n)
+    }
+
+    pub fn sqrt(&self) -> Vec4
+    {
+        Vec4::new(self.x().sqrt(), self.y().sqrt(), self.z().sqrt(), self.w().sqrt())
+    }
+
+    pub fn sqrt3(&self) -> Vec4
+    {
+        Vec4::new(self.x().sqrt(), self.y().sqrt(), self.z().sqrt(), 0.0)
+    }
+
+    pub fn fast_inv_sqrt(&self) -> Vec4
+    {
+        let half = self.v * 0.5;
+        // our fitted version fro min max error: 0x5F387D4A
+        let mut y = f32x4::from_bits(u32x4::splat(0x5f3759df) - (u32x4::from_bits(self.v) >> 1));
+
+        // newton iteration
+        y = y * (1.5 - (half * y * y));
+
+        //y = y * (1.5 - (half * y * y));
+        Vec4{v: y}
+    }
+
+    pub fn fast_sqrt(&self) -> Vec4
+    {
+        1.0 / self.fast_inv_sqrt()
     }
 }
 
@@ -487,6 +519,24 @@ impl DivAssign<f32> for Vec4 {
 impl DivAssign<&f32> for Vec4 {
     fn div_assign(&mut self, o: &f32) {
         self.v /= *o
+    }
+}
+
+impl Div<&Vec4> for f32
+{
+    type Output = Vec4;
+
+    fn div(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: 1.0 / o.v }
+    }
+}
+
+impl Div<Vec4> for f32
+{
+    type Output = Vec4;
+
+    fn div(self, o: Vec4) -> Vec4 {
+        Vec4 { v: 1.0 / o.v }
     }
 }
 
