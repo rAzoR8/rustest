@@ -200,27 +200,24 @@ fn main() {
 
     let cam = Camera::new(origin, target, up, 60.0, width, height, 0.0, 100.0);
 
-    let mut imgbuf = image::ImageBuffer::new(width, height);
-
     let mut ray_count = 0;
 
     //let pool = rayon::ThreadPoolBuilder::new().num_threads(8).build().unwrap();
 
-    let mut trace_scan_line = |y: u32| // -> ScanLine
+    let trace_scan_line = |y: u32| -> ScanLine
     {
-        //let mut scan_line = ScanLine::new();
-        //scan_line.reserve(width as usize);
+        let mut scan_line = ScanLine::with_capacity(width as usize);
 
         let scan_time = SystemTime::now();
         let mut ray = RayInfo::new();        
 
         let mut local_ray_count = 0;
         for x in 0..width
-        {  
-            imgbuf.put_pixel(x, y, color(&world, &cam, x, y, &mut ray, samples, &mut local_ray_count));         
+        {
+            scan_line[x as usize] = color(&world, &cam, x, y, &mut ray, samples, &mut local_ray_count);        
         }
 
-        ray_count += local_ray_count;
+        //ray_count += local_ray_count;
 
         let duration = scan_time.elapsed().unwrap().as_micros();
 
@@ -229,20 +226,26 @@ fn main() {
         let percent = (y * 100) as f32 / height as f32;
         print!("Y {} Progress {} \t Rays {} {} MRay/s \n", y, percent, ray_count, speed as f32);
 
-        //scan_line
+        scan_line
     };
 
     let total_time = SystemTime::now();
 
-    for y in 0..height  {
-        trace_scan_line(y);
-    }
-
-    // (0..height).into_par_iter().for_each(|y| 
-    // {
+    // for y in 0..height  {
     //     trace_scan_line(y);
     // }
-    // );
+
+    //let par_iter = (0..height).into_par_iter().flat_map(|y| trace_scan_line(y));
+    let par_iter = (0..height).into_par_iter().map(|y| trace_scan_line(y));
+    let scanlines: std::vec::Vec<_> = par_iter.collect();
+
+    let mut imgbuf = image::ImageBuffer::new(width, height);
+
+    for (y, scanline) in scanlines.iter().enumerate() {
+        for (x, pixel) in scanline.iter().enumerate() {
+            imgbuf.put_pixel(x as u32, y as u32, *pixel); 
+        }
+    }
 
     let duration = total_time.elapsed().unwrap().as_micros();
 
@@ -250,5 +253,4 @@ fn main() {
     print!("saving... Avg {} MRay/s", speed as f32);
 
     imgbuf.save("test.png").unwrap();
-
 }
