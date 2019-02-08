@@ -204,7 +204,7 @@ fn main() {
     let ray_count = AtomicU32::new(0);
     let line_count = AtomicU32::new(0);
 
-    //let pool = rayon::ThreadPoolBuilder::new().num_threads(8).build().unwrap();
+    let print_progress = false;
 
     let trace_scan_line = |y: u32| -> ScanLine
     {
@@ -219,17 +219,16 @@ fn main() {
             scan_line.push(color(&world, &cam, x, y, &mut ray, samples, &mut local_ray_count));        
         }
 
-        //ray_count += local_ray_count;
-
-        let duration = scan_time.elapsed().unwrap().as_micros();
-
-        let speed = local_ray_count as f64 / duration as f64;
-
-        let cur_line_count = line_count.fetch_add(1, Ordering::SeqCst);
         let cur_ray_count = ray_count.fetch_add(local_ray_count, Ordering::SeqCst);
 
-        let percent = (cur_line_count * 100) as f32 / height as f32;
-        print!("Y {} Progress {} \t Rays {} {} MRay/s \n", y, percent, cur_ray_count, speed as f32);
+        if print_progress
+        {
+            let cur_line_count = line_count.fetch_add(1, Ordering::SeqCst);
+            let duration = scan_time.elapsed().unwrap().as_micros();
+            let speed = local_ray_count as f64 / duration as f64;
+            let percent = (cur_line_count * 100) as f32 / height as f32;
+            print!("Y {} Progress {} \t Rays {} {} MRay/s \n", y, percent, cur_ray_count, speed as f32);
+        }
 
         scan_line
     };
