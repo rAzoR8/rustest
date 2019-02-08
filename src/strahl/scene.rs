@@ -2,19 +2,21 @@ use super::primitives::*;
 use super::material::*;
 use super::hit::*;
 use super::ray::*;
+use super::vec::*;
 use std::vec::*;
 
 pub struct Scene
 {
     pub primitives: std::vec::Vec<Primitive>,
-    pub materials: std::vec::Vec<Material>
+    pub materials: std::vec::Vec<Material>,
+    pub miss: Material
 }
 
 impl Scene
 {
     pub fn new() -> Scene
     {
-        Scene{primitives: std::vec::Vec::new(), materials: std::vec::Vec::new()}
+        Scene{primitives: std::vec::Vec::new(), materials: std::vec::Vec::new(), miss: Background::new(Vec4::from3(0.3, 0.3, 0.8), 1.0).material()}
     }
 
     pub fn add(&mut self, obj: Primitive)

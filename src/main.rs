@@ -93,43 +93,26 @@ pub fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
 
     if scn.hit(&r.ray, &mut hit, 0.0, 100.0)
     {
-        if normal
+        if !normal
         {            
-            mat_info.attenuation = (hit.normal + 1.0) * 0.5; 
+            let scattered = scn.get_mat(hit.material).scatter(&mut r.ray, &hit, &mut mat_info);
             r.add_mat(&mat_info);
-
-            return true; // terminated
+            return !scattered;   
         }
         else
         {
-            let mut scattered_ray = Ray::invalid();
-
-            let scattered = match scn.get_mat(hit.material)
-            {
-                Material::Lambertian {mat} => {mat.scatter(&r.ray, &hit, &mut mat_info, &mut scattered_ray)},
-                Material::Emissive {mat} => {mat.scatter(&r.ray, &hit, &mut mat_info, &mut scattered_ray)},
-                Material::Metal {mat} => {mat.scatter(&r.ray, &hit, &mut mat_info, &mut scattered_ray)}
-            };
-
-            if scattered
-            {
-                r.ray = scattered_ray;
-            }
-
+            mat_info.attenuation = (hit.normal + 1.0) * 0.5; 
             r.add_mat(&mat_info);
-
-            return !scattered;            
+            return true; // terminated
         }
     }
-    else // background
+    else // missed / escaped scene
     {
-        let t = 0.5 * (r.ray.direction.norm().y() + 1.0);
-        mat_info.emission = Vec4::from(1.0-t) + t * Vec4::from3(0.5, 0.7, 1.0);
-        mat_info.emission *= 0.5;
-        mat_info.attenuation = Vec4::one();
+        scn.miss.scatter(&mut r.ray, &hit, &mut mat_info);
+
         r.add_mat(&mat_info);
 
-        return true;
+        return true;  // terminated
     }
 }
 
@@ -229,25 +212,27 @@ pub fn trace_image(cam: &Camera, scn: &Scene, samples: u32, print_progress: bool
 fn main() {
     let mut world = Scene::new();
 
+    world.miss = Background::new(Vec4::from3(0.5, 0.7, 1.0), 1.0).material();
+
     let lamb1 = world.add_mat(Lambertian::new(0.8, 0.3, 0.3).material());
     let lamb2 = world.add_mat(Lambertian::new(0.1, 0.1, 0.0).material());
 
     let em1 = world.add_mat(Emissive::new(10.0, 10.0, 10.0).material());
     let em2 = world.add_mat(Emissive::new(1.0, 1.0, 1.0).material());
-    let metal1 = world.add_mat(Metal::new(1.0, 0.0, 0.0, 0.0).material()); // red
+    let metal1 = world.add_mat(Metal::new(0.9, 0.0, 0.0, 0.0).material()); // red
     let metal2 = world.add_mat(Metal::new(1.0, 1.0, 1.0, 0.0).material());
 
     let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(lamb1);
     let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(lamb2);
-    //let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.0, -1.0), 0.5).primitive(em2);
-    let sphere4 = Sphere::new(Vec4::from3(1.0, 0.0, -1.0), 0.3).primitive(em2); // right one
+    let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.5, -0.5), 0.4).primitive(metal1);
+    let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).primitive(em2); // right one
     let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(metal2);
 
     //let plane = Plane::new(Vec4::from3(0.0, 0.0, -10.0), Vec4::from3(-0.5, 0.0, -1.0).norm()).primitive(0); 
 
     world.add(sphere1);
     world.add(sphere2);
-    //world.add(sphere3);
+    world.add(sphere3);
     world.add(sphere4);
     world.add(sphere5);
 
@@ -255,8 +240,8 @@ fn main() {
 
     let debug = debug_divisior();
 
-    let width = 800 / debug;
-    let height = 450 / debug;
+    let width = 1600 / debug;
+    let height = 900 / debug;
     let samples = 100;
 
     let origin = Vec4::from3(0.0, 1.0, 1.0);

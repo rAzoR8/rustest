@@ -41,9 +41,16 @@ pub struct Metal
     pub roughness: f32
 }
 
+#[derive(Copy, Clone)]
+pub struct Background
+{
+    pub color: Vec4,
+    pub strength: f32
+}
+
 pub trait Scatter
 {
-    fn scatter(&self, _r: &Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo, _out_ray: &mut Ray) -> bool;
+    fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool;
 } 
 
 #[derive(Copy, Clone)]
@@ -51,7 +58,8 @@ pub enum Material
 {
     Lambertian {mat: Lambertian},
     Emissive {mat: Emissive},
-    Metal {mat: Metal}
+    Metal {mat: Metal},
+    Background {mat: Background}
 }
 
 //######################################################################
@@ -73,11 +81,11 @@ impl Lambertian
 
 impl Scatter for Lambertian
 {
-    fn scatter(&self, _r: &Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo, _out_ray: &mut Ray) -> bool
+    fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool
     {
         let target = _hit.point + _hit.normal + random_in_unit_sphere();
 
-        *_out_ray = Ray::new(_hit.point, (target - _hit.point).norm());
+        *_r = Ray::new(_hit.point, (target - _hit.point).norm());
 
         _out_mat.attenuation = self.albedo;
         _out_mat.emission = Vec4::zero();
@@ -105,7 +113,7 @@ impl Emissive
 
 impl Scatter for Emissive
 {
-    fn scatter(&self, _r: &Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo, _out_ray: &mut Ray) -> bool
+    fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool
     {
         _out_mat.attenuation = Vec4::one();
         _out_mat.emission = self.emissive;
@@ -133,7 +141,7 @@ impl Metal
 
 impl Scatter for Metal
 {
-    fn scatter(&self, _r: &Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo, _out_ray: &mut Ray) -> bool
+    fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool
     {
         let mut target = _r.direction.reflect(&_hit.normal);
         
@@ -142,11 +150,59 @@ impl Scatter for Metal
             target += self.roughness * random_in_unit_sphere();
         }  
 
-        *_out_ray = Ray::new(_hit.point, target.norm());
+        *_r = Ray::new(_hit.point, target.norm());
 
         _out_mat.attenuation = self.albedo;
         _out_mat.emission = Vec4::zero();
 
-        _out_ray.direction.dot(&_hit.normal) > 0.0
+        _r.direction.dot(&_hit.normal) > 0.0
+    }
+}
+
+//######################################################################
+// Background Grad
+//######################################################################
+
+impl Background
+{
+    pub fn new(_color: Vec4, _strength: f32) -> Background
+    {
+        Background{strength: _strength, color: _color}
+    }
+
+    pub fn material(&self) -> Material
+    {
+        Material::Background {mat: *self}
+    }
+}
+
+impl Scatter for Background
+{
+    fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool
+    {
+        let t = _r.direction.norm().y() + 1.0;
+        _out_mat.emission = (Vec4::from(1.0-t) + t * self.color) * self.strength;
+        _out_mat.attenuation = Vec4::one();
+        false
+    }
+}
+
+//######################################################################
+// Material
+//######################################################################
+
+impl Scatter for Material
+{
+    fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool
+    {
+        let scattered = match self
+        {
+            Material::Lambertian {mat} => {mat.scatter(_r, &_hit, _out_mat)},
+            Material::Emissive {mat} => {mat.scatter(_r, &_hit, _out_mat)},
+            Material::Metal {mat} => {mat.scatter(_r, &_hit, _out_mat)},
+            Material::Background {mat} => {mat.scatter(_r, &_hit, _out_mat)}
+        };
+
+        scattered
     }
 }
