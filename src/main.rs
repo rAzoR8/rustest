@@ -1,4 +1,6 @@
 #![feature(duration_as_u128)]
+#![feature(duration_float)]
+#![feature(integer_atomics)]
 
 extern crate image;
 extern crate rayon;
@@ -15,8 +17,8 @@ use crate::strahl::random;
 
 use image::{ImageBuffer, imageops};
 use rayon::prelude::*;
-
 use std::time::{Duration, SystemTime};
+use std::sync::atomic::{AtomicU32, Ordering};
 
 const MAX_DEPTH : usize = 20;
 
@@ -116,7 +118,6 @@ fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
     }
 }
 
-
 pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, samples: u32, ray_count: &mut u32) -> image::Rgb<u8>
 {
     let mut col = Vec4::zero();
@@ -200,7 +201,8 @@ fn main() {
 
     let cam = Camera::new(origin, target, up, 60.0, width, height, 0.0, 100.0);
 
-    let mut ray_count = 0;
+    let ray_count = AtomicU32::new(0);
+    let line_count = AtomicU32::new(0);
 
     //let pool = rayon::ThreadPoolBuilder::new().num_threads(8).build().unwrap();
 
@@ -214,7 +216,7 @@ fn main() {
         let mut local_ray_count = 0;
         for x in 0..width
         {
-            scan_line[x as usize] = color(&world, &cam, x, y, &mut ray, samples, &mut local_ray_count);        
+            scan_line.push(color(&world, &cam, x, y, &mut ray, samples, &mut local_ray_count));        
         }
 
         //ray_count += local_ray_count;
@@ -223,21 +225,21 @@ fn main() {
 
         let speed = local_ray_count as f64 / duration as f64;
 
-        let percent = (y * 100) as f32 / height as f32;
-        print!("Y {} Progress {} \t Rays {} {} MRay/s \n", y, percent, ray_count, speed as f32);
+        let cur_line_count = line_count.fetch_add(1, Ordering::SeqCst);
+        let cur_ray_count = ray_count.fetch_add(local_ray_count, Ordering::SeqCst);
+
+        let percent = (cur_line_count * 100) as f32 / height as f32;
+        print!("Y {} Progress {} \t Rays {} {} MRay/s \n", y, percent, cur_ray_count, speed as f32);
 
         scan_line
     };
 
     let total_time = SystemTime::now();
 
-    // for y in 0..height  {
-    //     trace_scan_line(y);
-    // }
-
-    //let par_iter = (0..height).into_par_iter().flat_map(|y| trace_scan_line(y));
     let par_iter = (0..height).into_par_iter().map(|y| trace_scan_line(y));
     let scanlines: std::vec::Vec<_> = par_iter.collect();
+
+    let elapsed = total_time.elapsed().unwrap();
 
     let mut imgbuf = image::ImageBuffer::new(width, height);
 
@@ -246,11 +248,12 @@ fn main() {
             imgbuf.put_pixel(x as u32, y as u32, *pixel); 
         }
     }
+    
+    let duration = elapsed.as_micros() as f64;
+    let seconds = elapsed.as_float_secs();
 
-    let duration = total_time.elapsed().unwrap().as_micros();
-
-    let speed = ray_count as f64 / duration as f64;
-    print!("saving... Avg {} MRay/s", speed as f32);
+    let speed = ray_count.into_inner() as f64 / duration;
+    print!("saving... Avg {} MRay/s {} Seconds", speed as f32, seconds);
 
     imgbuf.save("test.png").unwrap();
 }
