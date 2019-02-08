@@ -31,6 +31,7 @@ fn debug_divisior() -> u32 {
 }
 
 const MAX_DEPTH : usize = 10;
+const MULTTHREADING: bool = true;
 
 pub struct RayInfo
 {
@@ -64,9 +65,9 @@ impl RayInfo
     {
         if self.depth == 0 { return Vec4::zero();}
 
-        let mut col = Vec4::zero();
+        let mut col = self.mat_info[(self.depth - 1) as usize].emission;
 
-        for i in 1..self.depth+1
+        for i in 2..self.depth+1
         {
             let cur = self.mat_info[(self.depth - i) as usize];
             col *= cur.attenuation;
@@ -186,8 +187,19 @@ pub fn trace_image(cam: &Camera, scn: &Scene, samples: u32, print_progress: bool
     //// PARALELL TRACING ////
     let total_time = SystemTime::now();
 
-    let par_iter = (0..cam.height).into_par_iter().map(|y| trace_scan_line(y));
-    let scanlines: std::vec::Vec<_> = par_iter.collect();
+    let mut scanlines = std::vec::Vec::new();
+    if MULTTHREADING
+    {
+        let par_iter = (0..cam.height).into_par_iter().map(|y| trace_scan_line(y));
+        scanlines = par_iter.collect();
+    }
+    else
+    {
+        for y in 0..cam.height
+        {
+            scanlines.push(trace_scan_line(y));
+        }
+    }
 
     let elapsed = total_time.elapsed().unwrap();
     //// PARALELL TRACING ////
