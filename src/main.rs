@@ -110,19 +110,17 @@ pub fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
     else // missed / escaped scene
     {
         scn.miss.scatter(&mut r.ray, &hit, &mut mat_info);
-
         r.add_mat(&mat_info);
-
         return true;  // terminated
     }
 }
 
 #[inline]
-pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, samples: u32, ray_count: &mut u32) -> image::Rgb<u8>
+pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, ray_count: &mut u32) -> image::Rgb<u8>
 {
     let mut col = Vec4::zero();
             
-    for _ in 0..samples {
+    for _ in 0..cam.samples {
         
         let (s, t) = random_in_unit_disk2();
 
@@ -141,9 +139,9 @@ pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, 
         *ray_count += ray_info.depth;
     }
 
-    col /= samples as f32;
+    col /= cam.samples as f32;
 
-    let final_color = col.sqrt();
+    let final_color = col.pow3(1.0 / 2.2).clamp_scalar(0.0, 1.0);
 
     let r = (final_color.r() * 255.99) as u8;
     let g = (final_color.g() * 255.99) as u8;
@@ -152,7 +150,7 @@ pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, 
     image::Rgb([r, g, b])
 }
 
-pub fn trace_image(cam: &Camera, scn: &Scene, samples: u32, print_progress: bool) -> image::RgbImage
+pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> image::RgbImage
 {
     let ray_count = AtomicU32::new(0);
     let line_count = AtomicU32::new(0);
@@ -167,7 +165,7 @@ pub fn trace_image(cam: &Camera, scn: &Scene, samples: u32, print_progress: bool
         let mut local_ray_count = 0;
         for x in 0..cam.width
         {
-            scan_line.push(color(&scn, &cam, x, y, &mut ray, samples, &mut local_ray_count));        
+            scan_line.push(color(&scn, &cam, x, y, &mut ray, &mut local_ray_count));        
         }
 
         let cur_ray_count = ray_count.fetch_add(local_ray_count, Ordering::SeqCst);
@@ -224,7 +222,7 @@ pub fn trace_image(cam: &Camera, scn: &Scene, samples: u32, print_progress: bool
 fn main() {
     let mut world = Scene::new();
 
-    world.miss = Background::new(Vec4::from3(0.5, 0.7, 1.0), 1.0).material();
+    world.miss = Background::new(Vec4::from3(0.5, 0.7, 1.0), 0.1).material();
 
     let lamb1 = world.add_mat(Lambertian::new(0.8, 0.3, 0.3).material());
     let lamb2 = world.add_mat(Lambertian::new(0.1, 0.1, 0.0).material());
@@ -237,7 +235,7 @@ fn main() {
     let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(lamb1);
     let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(lamb2);
     let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.5, -0.5), 0.4).primitive(metal1);
-    let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).primitive(em2); // right one
+    let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).primitive(em1); // right one
     let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(metal2);
 
     //let plane = Plane::new(Vec4::from3(0.0, 0.0, -10.0), Vec4::from3(-0.5, 0.0, -1.0).norm()).primitive(0); 
@@ -260,7 +258,7 @@ fn main() {
     let target = Vec4::from3(0.0, 0.0, -1.0);
     let up = Vec4::from3(0.0, 1.0, 0.0);
 
-    let cam = Camera::new(origin, target, up, 60.0, width, height, 0.0, 100.0);
+    let cam = Camera::new(origin, target, up, 60.0, width, height, 0.0, 100.0, samples);
     
-    trace_image(&cam, &world, samples, false).save("test.png").unwrap();
+    trace_image(&cam, &world, false).save("test.png").unwrap();
 }

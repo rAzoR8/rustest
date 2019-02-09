@@ -164,7 +164,7 @@ impl Vec4 {
 
     pub fn sqrt3(&self) -> Vec4
     {
-        Vec4::new(self.x().sqrt(), self.y().sqrt(), self.z().sqrt(), 0.0)
+        Vec4::new(self.x().sqrt(), self.y().sqrt(), self.z().sqrt(), self.w())
     }
 
     pub fn fast_inv_sqrt(&self) -> Vec4
@@ -183,6 +183,46 @@ impl Vec4 {
     pub fn fast_sqrt(&self) -> Vec4
     {
         1.0 / self.fast_inv_sqrt()
+    }
+
+    pub fn exp(&self) -> Vec4
+    {
+        Vec4::new(self.x().exp(), self.y().exp(), self.z().exp(), self.w().exp())
+    }
+
+    pub fn exp3(&self) -> Vec4
+    {
+        Vec4::new(self.x().exp(), self.y().exp(), self.z().exp(), self.w())
+    }
+
+    pub fn pow(&self, exponent: f32) -> Vec4
+    {
+        Vec4::new(self.x().powf(exponent), self.y().powf(exponent), self.z().powf(exponent), self.w().powf(exponent))
+    }
+
+    pub fn pow3(&self, exponent: f32) -> Vec4
+    {
+        Vec4::new(self.x().powf(exponent), self.y().powf(exponent), self.z().powf(exponent), self.w())
+    }
+
+    pub fn min(&self, o: &Vec4) -> Vec4
+    {
+        Vec4{v: self.v.lt(o.v).select(self.v, o.v)}
+    }
+
+    pub fn max(&self, o: &Vec4) -> Vec4
+    {
+        Vec4{v: self.v.gt(o.v).select(self.v, o.v)}
+    }
+
+    pub fn clamp(&self, min: &Vec4, max: &Vec4) -> Vec4
+    {
+        self.max(min).min(max)
+    }
+
+    pub fn clamp_scalar(&self, min: f32, max: f32) -> Vec4
+    {
+        self.max(&Vec4::from(min)).min(&Vec4::from(max))
     }
 }
 

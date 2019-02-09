@@ -16,10 +16,19 @@ pub struct ConstantTexture
     pub color: Vec4
 }
 
+#[derive(Copy, Clone)]
+pub enum DynamicTextureType
+{
+    Linear,
+    sRGB, // TODO: add gamma?
+    RGBe
+}
+
 #[derive(Clone)]
 pub struct DynamicTexture
 {
-    pub img: image::DynamicImage
+    pub img: image::DynamicImage,
+    pub load_type: DynamicTextureType
 }
 
 #[derive(Clone)]
@@ -69,10 +78,10 @@ impl Sample for ConstantTexture
 
 impl DynamicTexture
 {
-    pub fn new<P>(path: &P) -> DynamicTexture
+    pub fn new<P>(path: &P, _type: DynamicTextureType) -> DynamicTexture
     where P: AsRef<Path>
     {
-        DynamicTexture{img: image::open(path).unwrap()}
+        DynamicTexture{img: image::open(path).unwrap(), load_type: _type}
     }
 }
 
@@ -81,8 +90,18 @@ impl Sample for DynamicTexture
     fn sample(&self, hit: &HitInfo) -> Vec4
     {
         let (x, y) = self.img.dimensions();
-        let pixel = self.img.get_pixel(x * hit.u as u32, y * hit.v as u32);
+        let data = self.img.get_pixel(x * hit.u as u32, y * hit.v as u32);
         //let rgba = pixel.channels();
-        Vec4::new(pixel[0] as f32 , pixel[1] as f32,  pixel[2] as f32, pixel[3] as f32) / 255.0
+
+        let in_color = Vec4::new(data[0] as f32 , data[1] as f32,  data[2] as f32, data[3] as f32) / 255.0;
+
+        let out_color = match self.load_type
+        {
+            DynamicTextureType::Linear => {in_color},
+            DynamicTextureType::sRGB  => {in_color.pow3(2.2)},
+            DynamicTextureType::RGBe => {in_color.pow3(in_color.a())} 
+        };
+
+        out_color
     }
 }
