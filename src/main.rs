@@ -40,7 +40,8 @@ pub struct RayInfo
     pub mat_info: [MaterialInfo; MAX_DEPTH]
 }
 
-type ScanLine = std::vec::Vec<image::Rgb<u8>>;
+type ScanLine = std::vec::Vec<Vec4>;
+type TraceOutput = std::vec::Vec<ScanLine>;
 
 impl RayInfo
 {
@@ -116,7 +117,7 @@ pub fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
 }
 
 #[inline]
-pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, ray_count: &mut u32) -> image::Rgb<u8>
+pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, ray_count: &mut u32) -> Vec4
 {
     let mut col = Vec4::zero();
             
@@ -141,16 +142,10 @@ pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, 
 
     col /= cam.samples as f32;
 
-    let final_color = col.pow3(1.0 / 2.2).clamp_scalar(0.0, 1.0);
-
-    let r = (final_color.r() * 255.99) as u8;
-    let g = (final_color.g() * 255.99) as u8;
-    let b = (final_color.b() * 255.99) as u8;
-
-    image::Rgb([r, g, b])
+    col
 }
 
-pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> image::RgbImage
+pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutput
 {
     let ray_count = AtomicU32::new(0);
     let line_count = AtomicU32::new(0);
@@ -185,7 +180,7 @@ pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> image::Rg
     //// PARALELL TRACING ////
     let total_time = SystemTime::now();
 
-    let mut scanlines = std::vec::Vec::new();
+    let mut scanlines = TraceOutput::new();
     if MULTTHREADING
     {
         let par_iter = (0..cam.height).into_par_iter().map(|y| trace_scan_line(y));
@@ -208,21 +203,13 @@ pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> image::Rg
 
     print!("Avg {} MRay/s {} Seconds", speed as f32, seconds);
 
-    let mut imgbuf = image::ImageBuffer::new(cam.width, cam.height);
-
-    for (y, scanline) in scanlines.iter().enumerate() {
-        for (x, pixel) in scanline.iter().enumerate() {
-            imgbuf.put_pixel(x as u32, y as u32, *pixel); 
-        }
-    }
-
-    imgbuf
+    scanlines
 }
 
 fn main() {
     let mut world = Scene::new();
 
-    world.miss = Background::new(Vec4::from3(0.5, 0.7, 1.0), 0.1).material();
+    world.miss = Background::new(Vec4::from3(0.5, 0.7, 1.0), 1.0).material();
 
     let lamb1 = world.add_mat(Lambertian::new(0.8, 0.3, 0.3).material());
     let lamb2 = world.add_mat(Lambertian::new(0.1, 0.1, 0.0).material());
@@ -235,7 +222,7 @@ fn main() {
     let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(lamb1);
     let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(lamb2);
     let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.5, -0.5), 0.4).primitive(metal1);
-    let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).primitive(em1); // right one
+    let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).primitive(em2); // right one
     let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(metal2);
 
     //let plane = Plane::new(Vec4::from3(0.0, 0.0, -10.0), Vec4::from3(-0.5, 0.0, -1.0).norm()).primitive(0); 
@@ -259,6 +246,27 @@ fn main() {
     let up = Vec4::from3(0.0, 1.0, 0.0);
 
     let cam = Camera::new(origin, target, up, 60.0, width, height, 0.0, 100.0, samples);
-    
-    trace_image(&cam, &world, false).save("test.png").unwrap();
+
+    let scanlines = trace_image(&cam, &world, false);
+
+    let mut imgbuf = image::ImageBuffer::new(cam.width, cam.height);
+
+    let tonemap = |color: &Vec4| -> image::Rgb<u8>
+    {
+        let final_color = color.pow3(1.0 / 2.2).clamp_scalar(0.0, 1.0);
+
+        let r = (final_color.r() * 255.99) as u8;
+        let g = (final_color.g() * 255.99) as u8;
+        let b = (final_color.b() * 255.99) as u8;
+
+        image::Rgb([r, g, b])
+    };
+
+    for (y, scanline) in scanlines.iter().enumerate() {
+        for (x, pixel) in scanline.iter().enumerate() {
+            imgbuf.put_pixel(x as u32, y as u32, tonemap(pixel)); 
+        }
+    }
+
+    imgbuf.save("test.png").unwrap();
 }
