@@ -53,6 +53,10 @@ pub trait Scatter
     fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool;
 } 
 
+//######################################################################
+// Material
+//######################################################################
+
 #[derive(Copy, Clone)]
 pub enum Material
 {
@@ -60,6 +64,22 @@ pub enum Material
     Emissive {mat: Emissive},
     Metal {mat: Metal},
     Background {mat: Background}
+}
+
+impl Scatter for Material
+{
+    fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool
+    {
+        let scattered = match self
+        {
+            Material::Lambertian {mat} => {mat.scatter(_r, &_hit, _out_mat)},
+            Material::Emissive {mat} => {mat.scatter(_r, &_hit, _out_mat)},
+            Material::Metal {mat} => {mat.scatter(_r, &_hit, _out_mat)},
+            Material::Background {mat} => {mat.scatter(_r, &_hit, _out_mat)}
+        };
+
+        scattered
+    }
 }
 
 //######################################################################
@@ -184,25 +204,5 @@ impl Scatter for Background
         _out_mat.emission = (Vec4::from(1.0-t) + t * self.color) * self.strength;
         _out_mat.attenuation = Vec4::one();
         false
-    }
-}
-
-//######################################################################
-// Material
-//######################################################################
-
-impl Scatter for Material
-{
-    fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool
-    {
-        let scattered = match self
-        {
-            Material::Lambertian {mat} => {mat.scatter(_r, &_hit, _out_mat)},
-            Material::Emissive {mat} => {mat.scatter(_r, &_hit, _out_mat)},
-            Material::Metal {mat} => {mat.scatter(_r, &_hit, _out_mat)},
-            Material::Background {mat} => {mat.scatter(_r, &_hit, _out_mat)}
-        };
-
-        scattered
     }
 }

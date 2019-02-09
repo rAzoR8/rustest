@@ -9,3 +9,4 @@ pub mod camera;
 pub mod scene;
 pub mod material;
 pub mod random;
+pub mod texture;

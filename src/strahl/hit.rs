@@ -7,6 +7,8 @@ pub struct HitInfo
     pub point: Vec4,
     pub normal: Vec4,
     pub depth: f32,
+    pub u: f32,
+    pub v: f32,
     pub material: u32 // supplied by primitive
 }
 
@@ -14,7 +16,7 @@ impl HitInfo
 {
     pub fn new() -> HitInfo
     {
-        HitInfo{point: Vec4::from(0.0), normal: Vec4::from(0.0), depth: 0.0, material: 0}
+        HitInfo{point: Vec4::from(0.0), normal: Vec4::from(0.0), depth: 0.0, material: 0, u: 0.0, v: 0.0}
     }
 }
 
