@@ -14,6 +14,7 @@ use crate::strahl::vec::*;
 use crate::strahl::hit::*;
 use crate::strahl::ray::*;
 use crate::strahl::random::*;
+use crate::strahl::tonemap::*;
 
 use image::{ImageBuffer, imageops};
 use rayon::prelude::*;
@@ -209,21 +210,21 @@ pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutp
 fn main() {
     let mut world = Scene::new();
 
-    world.miss = Background::new(Vec4::from3(0.5, 0.7, 1.0), 1.0).material();
+    world.miss = Background::new(Vec4::from3(0.5, 0.7, 1.0), 1.2).material();
 
     let lamb1 = world.add_mat(Lambertian::new(0.8, 0.3, 0.3).material());
     let lamb2 = world.add_mat(Lambertian::new(0.1, 0.1, 0.0).material());
 
-    let em1 = world.add_mat(Emissive::new(10.0, 10.0, 10.0).material());
+    let em1 = world.add_mat(Emissive::new(100.0, 100.0, 100.0).material());
     let em2 = world.add_mat(Emissive::new(1.0, 1.0, 1.0).material());
-    let metal1 = world.add_mat(Metal::new(0.9, 0.0, 0.0, 0.0).material()); // red
+    let metal1 = world.add_mat(Metal::new(0.9, 0.5, 0.5, 0.0).material()); // red
     let metal2 = world.add_mat(Metal::new(1.0, 1.0, 1.0, 0.0).material());
 
-    let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(lamb1);
-    let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(lamb2);
+    let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(metal1);
+    let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(metal1);
     let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.5, -0.5), 0.4).primitive(metal1);
-    let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).primitive(em2); // right one
-    let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(metal2);
+    let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).primitive(lamb2); // right one
+    let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(lamb1);
 
     //let plane = Plane::new(Vec4::from3(0.0, 0.0, -10.0), Vec4::from3(-0.5, 0.0, -1.0).norm()).primitive(0); 
 
@@ -251,20 +252,22 @@ fn main() {
 
     let mut imgbuf = image::ImageBuffer::new(cam.width, cam.height);
 
-    let tonemap = |color: &Vec4| -> image::Rgb<u8>
-    {
-        let final_color = color.pow3(1.0 / 2.2).clamp_scalar(0.0, 1.0);
+    let tone_operator = ReinhardTonemap::new(2.2, 1.0);
 
-        let r = (final_color.r() * 255.99) as u8;
-        let g = (final_color.g() * 255.99) as u8;
-        let b = (final_color.b() * 255.99) as u8;
+    let quantize = |color: &Vec4| -> image::Rgb<u8>
+    {
+        let final_color = tone_operator.tonemap(color).clamp_scalar(0.0, 1.0) * 255.99;
+
+        let r = final_color.r() as u8;
+        let g = final_color.g() as u8;
+        let b = final_color.b() as u8;
 
         image::Rgb([r, g, b])
     };
 
     for (y, scanline) in scanlines.iter().enumerate() {
         for (x, pixel) in scanline.iter().enumerate() {
-            imgbuf.put_pixel(x as u32, y as u32, tonemap(pixel)); 
+            imgbuf.put_pixel(x as u32, y as u32, quantize(pixel)); 
         }
     }
 

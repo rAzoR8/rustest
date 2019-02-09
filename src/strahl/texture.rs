@@ -93,14 +93,16 @@ impl Sample for DynamicTexture
         let data = self.img.get_pixel(x * hit.u as u32, y * hit.v as u32);
         //let rgba = pixel.channels();
 
-        let in_color = Vec4::new(data[0] as f32 , data[1] as f32,  data[2] as f32, data[3] as f32) / 255.0;
+        let in_color = Vec4::new(data[0] as f32 , data[1] as f32,  data[2] as f32, data[3] as f32);
 
         let out_color = match self.load_type
         {
-            DynamicTextureType::Linear => {in_color},
-            DynamicTextureType::sRGB  => {in_color.pow3(2.2)},
-            DynamicTextureType::RGBe => {in_color.pow3(in_color.a())} 
+            DynamicTextureType::Linear => {in_color / 255.0},
+            DynamicTextureType::sRGB  => {(in_color / 255.0).pow3(2.2)},
+            DynamicTextureType::RGBe => { (in_color / 255.0) * (2.0 as f32).powf(in_color.a() - 128.0)} 
         };
+
+        // https://github.com/opencv/opencv/blob/master/modules/imgcodecs/src/rgbe.cpp
 
         out_color
     }

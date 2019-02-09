@@ -486,6 +486,14 @@ impl Mul<f32> for Vec4 {
     }
 }
 
+impl Mul<&f32> for Vec4 {
+    type Output = Vec4;
+
+    fn mul(self, o: &f32) -> Vec4 {
+        Vec4 { v: self.v * *o }
+    }
+}
+
 impl Mul<Vec4> for f32
 {
     type Output = Vec4;
@@ -501,14 +509,6 @@ impl Mul<&Vec4> for f32
 
     fn mul(self, o: &Vec4) -> Vec4 {
         Vec4 { v: o.v * self}
-    }
-}
-
-impl Mul<&f32> for Vec4 {
-    type Output = Vec4;
-
-    fn mul(self, o: &f32) -> Vec4 {
-        Vec4 { v: self.v * *o }
     }
 }
 
@@ -528,6 +528,14 @@ impl MulAssign<&f32> for Vec4 {
 // Div
 //######################################################################
 
+impl Div<Vec4> for Vec4 {
+    type Output = Vec4;
+
+    fn div(self, o: Vec4) -> Vec4 {
+        Vec4 { v: self.v / o.v }
+    }
+}
+
 impl Div<&Vec4> for Vec4 {
     type Output = Vec4;
 
@@ -538,6 +546,12 @@ impl Div<&Vec4> for Vec4 {
 
 impl DivAssign<&Vec4> for Vec4 {
     fn div_assign(&mut self, o: &Vec4) {
+        self.v /= o.v
+    }
+}
+
+impl DivAssign<Vec4> for Vec4 {
+    fn div_assign(&mut self, o: Vec4) {
         self.v /= o.v
     }
 }
@@ -562,20 +576,20 @@ impl DivAssign<&f32> for Vec4 {
     }
 }
 
-impl Div<&Vec4> for f32
-{
-    type Output = Vec4;
-
-    fn div(self, o: &Vec4) -> Vec4 {
-        Vec4 { v: 1.0 / o.v }
-    }
-}
-
 impl Div<Vec4> for f32
 {
     type Output = Vec4;
 
     fn div(self, o: Vec4) -> Vec4 {
+        Vec4 { v: 1.0 / o.v }
+    }
+}
+
+impl Div<&Vec4> for f32
+{
+    type Output = Vec4;
+
+    fn div(self, o: &Vec4) -> Vec4 {
         Vec4 { v: 1.0 / o.v }
     }
 }
