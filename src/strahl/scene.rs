@@ -16,7 +16,7 @@ impl Scene
 {
     pub fn new() -> Scene
     {
-        Scene{primitives: std::vec::Vec::new(), materials: std::vec::Vec::new(), miss: Background::new(Vec4::from3(0.3, 0.3, 0.8), 1.0).material()}
+        Scene{primitives: std::vec::Vec::new(), materials: std::vec::Vec::new(), miss: Background::new(Vec4::from3(0.3, 0.3, 0.8), 1.0)}
     }
 
     pub fn add(&mut self, obj: Primitive)

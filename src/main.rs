@@ -15,6 +15,7 @@ use crate::strahl::hit::*;
 use crate::strahl::ray::*;
 use crate::strahl::random::*;
 use crate::strahl::tonemap::*;
+use crate::strahl::texture::*;
 
 use image::{ImageBuffer, imageops};
 use rayon::prelude::*;
@@ -181,8 +182,8 @@ pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutp
     //// PARALELL TRACING ////
     let total_time = SystemTime::now();
 
-    let mut scanlines = TraceOutput::new();
-    if MULTTHREADING
+    let mut scanlines = TraceOutput::with_capacity(cam.height as usize);
+    if MULTTHREADING && debug_divisior() == 1
     {
         let par_iter = (0..cam.height).into_par_iter().map(|y| trace_scan_line(y));
         scanlines = par_iter.collect();
@@ -210,17 +211,19 @@ pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutp
 fn main() {
     let mut world = Scene::new();
 
-    world.miss = Background::new(Vec4::from3(0.5, 0.7, 1.0), 1.2).material();
+    world.miss = Background::new(Vec4::from3(0.5, 0.7, 1.0), 1.2);
 
-    let lamb1 = world.add_mat(Lambertian::new(0.8, 0.3, 0.3).material());
-    let lamb2 = world.add_mat(Lambertian::new(0.1, 0.1, 0.0).material());
+    let link = world.add_mat(Lambertian::from_path("meme.png", DynamicTextureType::Linear));
 
-    let em1 = world.add_mat(Emissive::new(100.0, 100.0, 100.0).material());
-    let em2 = world.add_mat(Emissive::new(1.0, 1.0, 1.0).material());
-    let metal1 = world.add_mat(Metal::new(0.9, 0.5, 0.5, 0.0).material()); // red
-    let metal2 = world.add_mat(Metal::new(1.0, 1.0, 1.0, 0.0).material());
+    let lamb1 = world.add_mat(Lambertian::new(0.8, 0.3, 0.3));
+    let lamb2 = world.add_mat(Lambertian::new(0.1, 0.1, 0.0));
 
-    let sphere1 = Sphere::new(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(metal1);
+    let em1 = world.add_mat(Emissive::new(100.0, 100.0, 100.0));
+    let em2 = world.add_mat(Emissive::new(1.0, 1.0, 1.0));
+    let metal1 = world.add_mat(Metal::new(0.9, 0.5, 0.5, 0.0)); // red
+    let metal2 = world.add_mat(Metal::new(1.0, 1.0, 1.0, 0.0));
+
+    let sphere1 = Sphere::new_with_uv(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(link);
     let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(metal1);
     let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.5, -0.5), 0.4).primitive(metal1);
     let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).primitive(lamb2); // right one

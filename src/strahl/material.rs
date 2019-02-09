@@ -2,6 +2,7 @@ use super::vec::*;
 use super::ray::*;
 use super::hit::*;
 use super::random::*;
+use super::texture::*;
 
 #[derive(Copy, Clone)]
 pub struct MaterialInfo
@@ -22,29 +23,29 @@ impl MaterialInfo
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Lambertian
 {
-    pub albedo: Vec4
+    pub albedo: Texture
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Emissive
 {
-    pub emissive: Vec4
+    pub emissive: Texture
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Metal
 {
-    pub albedo: Vec4,
+    pub albedo: Texture,
     pub roughness: f32
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Background
 {
-    pub color: Vec4,
+    pub color: Texture,
     pub strength: f32
 }
 
@@ -57,7 +58,7 @@ pub trait Scatter
 // Material
 //######################################################################
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum Material
 {
     Lambertian {mat: Lambertian},
@@ -88,14 +89,15 @@ impl Scatter for Material
 
 impl Lambertian
 {
-    pub fn new(r: f32, g: f32, b: f32) -> Lambertian
+    pub fn new(r: f32, g: f32, b: f32) -> Material
     {
-        Lambertian{albedo: Vec4::from3(r, g, b)}
+        Material::Lambertian{mat: Lambertian{albedo: ConstantTexture::from(r, g, b).texture()}}
     }
 
-    pub fn material(&self) -> Material
+    pub fn from_path<P>(path: P, _type: DynamicTextureType) -> Material
+    where P: AsRef<std::path::Path>
     {
-        Material::Lambertian {mat: *self}
+        Material::Lambertian{mat: Lambertian{albedo: Texture::DynamicTexture{tex: DynamicTexture::new(path, _type)}}}
     }
 }
 
@@ -107,7 +109,7 @@ impl Scatter for Lambertian
 
         *_r = Ray::new(_hit.point, (target - _hit.point).norm());
 
-        _out_mat.attenuation = self.albedo;
+        _out_mat.attenuation = self.albedo.sample(_hit);
         _out_mat.emission = Vec4::zero();
 
         true
@@ -120,14 +122,15 @@ impl Scatter for Lambertian
 
 impl Emissive
 {
-    pub fn new(r: f32, g: f32, b: f32) -> Emissive
+    pub fn new(r: f32, g: f32, b: f32) -> Material
     {
-        Emissive{emissive: Vec4::from3(r, g, b)}
+        Material::Emissive{mat: Emissive{emissive: ConstantTexture::from(r, g, b).texture()}}
     }
 
-    pub fn material(&self) -> Material
+    pub fn from_path<P>(path: P, _type: DynamicTextureType) -> Material
+    where P: AsRef<std::path::Path>
     {
-        Material::Emissive {mat: *self}
+        Material::Emissive{mat: Emissive{emissive: Texture::DynamicTexture{tex: DynamicTexture::new(path, _type)}}}
     }
 }
 
@@ -136,7 +139,7 @@ impl Scatter for Emissive
     fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool
     {
         _out_mat.attenuation = Vec4::one();
-        _out_mat.emission = self.emissive;
+        _out_mat.emission = self.emissive.sample(_hit);
 
         false
     }
@@ -148,14 +151,15 @@ impl Scatter for Emissive
 
 impl Metal
 {
-    pub fn new(r: f32, g: f32, b: f32, _roughness: f32) -> Metal
+    pub fn new(r: f32, g: f32, b: f32, _roughness: f32) -> Material
     {
-        Metal{albedo: Vec4::from3(r, g, b), roughness: _roughness}
+        Material::Metal{mat: Metal{albedo: ConstantTexture::from(r, g, b).texture(), roughness: _roughness}}
     }
 
-    pub fn material(&self) -> Material
+    pub fn from_path<P>(path: P, _type: DynamicTextureType, _roughness: f32) -> Material
+    where P: AsRef<std::path::Path>
     {
-        Material::Metal {mat: *self}
+        Material::Metal{mat: Metal{albedo: Texture::DynamicTexture{tex: DynamicTexture::new(path, _type)}, roughness: _roughness}}
     }
 }
 
@@ -172,7 +176,7 @@ impl Scatter for Metal
 
         *_r = Ray::new(_hit.point, target.norm());
 
-        _out_mat.attenuation = self.albedo;
+        _out_mat.attenuation = self.albedo.sample(_hit);
         _out_mat.emission = Vec4::zero();
 
         _r.direction.dot(&_hit.normal) > 0.0
@@ -185,14 +189,15 @@ impl Scatter for Metal
 
 impl Background
 {
-    pub fn new(_color: Vec4, _strength: f32) -> Background
+    pub fn new(_color: Vec4, _strength: f32) -> Material
     {
-        Background{strength: _strength, color: _color}
+        Material::Background{mat: Background{strength: _strength, color: ConstantTexture::new(&_color).texture()}}
     }
 
-    pub fn material(&self) -> Material
+    pub fn from_path<P>(path: P, _type: DynamicTextureType, _strength: f32) -> Material
+    where P: AsRef<std::path::Path>
     {
-        Material::Background {mat: *self}
+        Material::Background{mat: Background{color: Texture::DynamicTexture{tex: DynamicTexture::new(path, _type)}, strength: _strength}}
     }
 }
 
@@ -201,7 +206,7 @@ impl Scatter for Background
     fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool
     {
         let t = _r.direction.norm().y() + 1.0;
-        _out_mat.emission = (Vec4::from(1.0-t) + t * self.color) * self.strength;
+        _out_mat.emission = (Vec4::from(1.0-t) + t * self.color.sample(_hit)) * self.strength;
         _out_mat.attenuation = Vec4::one();
         false
     }

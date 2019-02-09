@@ -1,6 +1,5 @@
 use super::vec::*;
 use rand::prelude::*;
-use std::f32::consts::PI;
 
 pub fn random_tuple(min: f32, max: f32) -> (f32, f32)
 {

@@ -62,6 +62,16 @@ impl ConstantTexture
     {
         ConstantTexture{color: *_color}
     }
+
+    pub fn from(r: f32, g: f32, b: f32) -> ConstantTexture
+    {
+        ConstantTexture{color: Vec4::from3(r,g,b)}
+    }
+
+    pub fn texture(&self) -> Texture
+    {
+        Texture::ConstantTexture{tex: *self}
+    }
 }
 
 impl Sample for ConstantTexture
@@ -78,10 +88,16 @@ impl Sample for ConstantTexture
 
 impl DynamicTexture
 {
-    pub fn new<P>(path: &P, _type: DynamicTextureType) -> DynamicTexture
+    pub fn new<P>(path: P, _type: DynamicTextureType) -> DynamicTexture
     where P: AsRef<Path>
     {
         DynamicTexture{img: image::open(path).unwrap(), load_type: _type}
+    }    
+
+    pub fn texture<P>(path: P, _type: DynamicTextureType) -> Texture
+    where P: AsRef<Path>
+    {
+        Texture::DynamicTexture{tex: DynamicTexture{img: image::open(path).unwrap(), load_type: _type}}
     }
 }
 
@@ -90,10 +106,17 @@ impl Sample for DynamicTexture
     fn sample(&self, hit: &HitInfo) -> Vec4
     {
         let (x, y) = self.img.dimensions();
-        let data = self.img.get_pixel(x * hit.u as u32, y * hit.v as u32);
+        let u = (x * hit.u as u32).min(x-1);
+        let v = (y * hit.v as u32).min(y-1);
+        let data = self.img.get_pixel(u, v);
         //let rgba = pixel.channels();
 
         let in_color = Vec4::new(data[0] as f32 , data[1] as f32,  data[2] as f32, data[3] as f32);
+
+        // if in_color.x() < 255.0
+        // {
+        //     print!("zes");
+        // }
 
         let out_color = match self.load_type
         {
