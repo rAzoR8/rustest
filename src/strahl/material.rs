@@ -107,7 +107,7 @@ impl Scatter for Lambertian
     {
         let target = _hit.point + _hit.normal + random_in_unit_sphere();
 
-        *_r = Ray::new(_hit.point, (target - _hit.point).norm());
+        *_r = Ray::new(_hit.point, target - _hit.point);
 
         _out_mat.attenuation = self.albedo.sample(_hit);
         _out_mat.emission = Vec4::zero();
@@ -174,7 +174,7 @@ impl Scatter for Metal
             target += self.roughness * random_in_unit_sphere();
         }  
 
-        *_r = Ray::new(_hit.point, target.norm());
+        *_r = Ray::new(_hit.point, target);
 
         _out_mat.attenuation = self.albedo.sample(_hit);
         _out_mat.emission = Vec4::zero();
