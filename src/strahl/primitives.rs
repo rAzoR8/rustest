@@ -82,16 +82,18 @@ impl Hitable for Sphere {
             }
 
             if valid_hit {
-                let dir = out.point - self.pos;
-                out.normal = (dir / a).norm();
+                out.normal = (out.point - self.pos) / self.radius;
 
                 if self.compute_uv
                 {
-                    let p = dir / self.radius;
+                    //out.u = out.normal.x().atan2(out.normal.z()) / (std::f32::consts::PI * 2.0) + 0.5;
+                    //out.v = out.normal.z() * 0.5 + 0.5;
+
+                    let p = out.normal;
                     let phi = p.z().atan2(p.x());
                     let theta = p.y().asin();
-                    out.u = 1.0 - (phi + std::f32::consts::PI) / (std::f32::consts::PI * 2.0);
-                    out.v = (theta + std::f32::consts::PI * 0.5) * std::f32::consts::FRAC_1_PI;
+                    out.u = (phi + std::f32::consts::PI) / (std::f32::consts::PI * 2.0);
+                    out.v = 1.0 - (theta + std::f32::consts::PI * 0.5) * std::f32::consts::FRAC_1_PI;
                 }
             }
 

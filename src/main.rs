@@ -17,7 +17,7 @@ use crate::strahl::random::*;
 use crate::strahl::tonemap::*;
 use crate::strahl::texture::*;
 
-use image::{ImageBuffer, imageops};
+use image::{GenericImageView, ImageBuffer, imageops};
 use rayon::prelude::*;
 use std::time::{Duration, SystemTime};
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -213,7 +213,7 @@ fn main() {
 
     world.miss = Background::new(Vec4::from3(0.5, 0.7, 1.0), 1.2);
 
-    let link = world.add_mat(Lambertian::from_path("meme.png", DynamicTextureType::Linear));
+    let link = world.add_mat(Lambertian::from_path("meme.png", DynamicTextureType::sRGB));
 
     let lamb1 = world.add_mat(Lambertian::new(0.8, 0.3, 0.3));
     let lamb2 = world.add_mat(Lambertian::new(0.1, 0.1, 0.0));

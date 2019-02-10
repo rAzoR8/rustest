@@ -106,17 +106,11 @@ impl Sample for DynamicTexture
     fn sample(&self, hit: &HitInfo) -> Vec4
     {
         let (x, y) = self.img.dimensions();
-        let u = (x * hit.u as u32).min(x-1);
-        let v = (y * hit.v as u32).min(y-1);
-        let data = self.img.get_pixel(u, v);
-        //let rgba = pixel.channels();
+        let u = (x as f32 * hit.u) as u32;
+        let v = (y as f32 * hit.v) as u32;
+        let data = self.img.get_pixel(u.min(x-1), v.min(y-1));
 
         let in_color = Vec4::new(data[0] as f32 , data[1] as f32,  data[2] as f32, data[3] as f32);
-
-        // if in_color.x() < 255.0
-        // {
-        //     print!("zes");
-        // }
 
         let out_color = match self.load_type
         {
