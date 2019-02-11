@@ -32,7 +32,8 @@ pub struct Lambertian
 #[derive(Clone)]
 pub struct Emissive
 {
-    pub emissive: Texture
+    pub emissive: Texture,
+    pub strength: Vec4
 }
 
 #[derive(Clone)]
@@ -83,6 +84,45 @@ impl Scatter for Material
     }
 }
 
+impl Material
+{
+    pub fn get_lambertian(&mut self) -> &mut Lambertian
+    {
+        match self
+        {
+            Material::Lambertian {mat} => {mat}
+            _ => {panic!()}
+        }
+    }
+
+    pub fn get_emissive(&mut self) -> &mut Emissive
+    {
+        match self
+        {
+            Material::Emissive {mat} => {mat}
+            _ => {panic!()}
+        }
+    }
+
+    pub fn get_metal(&mut self) -> &mut Metal
+    {
+        match self
+        {
+            Material::Metal {mat} => {mat}
+            _ => {panic!()}
+        }
+    }
+
+    pub fn get_background(&mut self) -> &mut Background
+    {
+        match self
+        {
+            Material::Background {mat} => {mat}
+            _ => {panic!()}
+        }
+    }
+}
+
 //######################################################################
 // Lambertian
 //######################################################################
@@ -107,7 +147,7 @@ impl Scatter for Lambertian
     {
         let target = _hit.point + _hit.normal + random_in_unit_sphere();
 
-        *_r = Ray::new(_hit.point, target - _hit.point);
+        *_r = Ray::new(_hit.point, (target - _hit.point).norm());
 
         _out_mat.attenuation = self.albedo.sample(_hit);
         _out_mat.emission = Vec4::zero();
@@ -120,17 +160,24 @@ impl Scatter for Lambertian
 // Emissive
 //######################################################################
 
-impl Emissive
-{
+impl Emissive {
     pub fn new(r: f32, g: f32, b: f32) -> Material
     {
-        Material::Emissive{mat: Emissive{emissive: ConstantTexture::from(r, g, b).texture()}}
+        Material::Emissive{mat: Emissive{emissive: ConstantTexture::from(r, g, b).texture(), strength: Vec4::one()}}
     }
 
-    pub fn from_path<P>(path: P, _type: DynamicTextureType) -> Material
-    where P: AsRef<std::path::Path>
+    pub fn from_path<P>(path: P, _strength: Vec4, _type: DynamicTextureType) -> Material
+    where
+        P: AsRef<std::path::Path>,
     {
-        Material::Emissive{mat: Emissive{emissive: Texture::DynamicTexture{tex: DynamicTexture::new(path, _type)}}}
+        Material::Emissive {
+            mat: Emissive {
+                emissive: Texture::DynamicTexture {
+                    tex: DynamicTexture::new(path, _type),
+                },
+                strength: _strength
+            },
+        }
     }
 }
 
@@ -139,7 +186,7 @@ impl Scatter for Emissive
     fn scatter(&self, _r: &mut Ray, _hit: &HitInfo, _out_mat: &mut MaterialInfo) -> bool
     {
         _out_mat.attenuation = Vec4::one();
-        _out_mat.emission = self.emissive.sample(_hit);
+        _out_mat.emission = self.emissive.sample(_hit) * self.strength;
 
         false
     }
@@ -174,7 +221,7 @@ impl Scatter for Metal
             target += self.roughness * random_in_unit_sphere();
         }  
 
-        *_r = Ray::new(_hit.point, target);
+        *_r = Ray::new(_hit.point, target.norm());
 
         _out_mat.attenuation = self.albedo.sample(_hit);
         _out_mat.emission = Vec4::zero();

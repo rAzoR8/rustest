@@ -4,7 +4,7 @@
 use packed_simd::{f32x4, shuffle, u32x4, FromBits};
 
 use std::cmp::PartialEq;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign, Neg};
 
 #[derive(Copy, Clone)]
 pub struct Vec4 {
@@ -601,5 +601,17 @@ impl Div<&Vec4> for f32
 impl PartialEq for Vec4 {
     fn eq(&self, o: &Vec4) -> bool {
         self.v == o.v
+    }
+}
+
+//######################################################################
+// Neq
+//######################################################################
+
+impl Neg for Vec4 {
+    type Output = Vec4;
+
+    fn neg(self) -> Vec4 {
+        Vec4{v: -self.v}
     }
 }

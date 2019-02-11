@@ -112,7 +112,7 @@ pub fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
     }
     else // missed / escaped scene
     {
-        scn.miss.scatter(&mut r.ray, &hit, &mut mat_info);
+        scn.get_miss_mat().scatter(&mut r.ray, &hit, &mut mat_info);
         r.add_mat(&mat_info);
         return true;  // terminated
     }
@@ -179,7 +179,7 @@ pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutp
         scan_line
     };
 
-    //// PARALELL TRACING ////
+    //// TRACING ////
     let total_time = SystemTime::now();
 
     let mut scanlines = TraceOutput::with_capacity(cam.height as usize);
@@ -197,47 +197,48 @@ pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutp
     }
 
     let elapsed = total_time.elapsed().unwrap();
-    //// PARALELL TRACING ////
+    //// TRACING ////
 
     let duration = elapsed.as_micros() as f64;
     let seconds = elapsed.as_float_secs();
     let speed = ray_count.into_inner() as f64 / duration;
 
-    print!("Avg {} MRay/s {} Seconds", speed as f32, seconds);
+    println!("Avg {} MRay/s {} Seconds", speed as f32, seconds);
 
     scanlines
 }
 
 fn main() {
+
+    println!("loading scene...");
+
     let mut world = Scene::new();
+    world.set_envmap("Ocean.jpg", Vec4::from(2.0), DynamicTextureType::sRGB);
 
-    world.miss = Background::new(Vec4::from3(0.5, 0.7, 1.0), 1.2);
-
-    let link = world.add_mat(Lambertian::from_path("earth.jpg", DynamicTextureType::sRGB));
+    let earth = world.add_mat(Lambertian::from_path("earth.jpg", DynamicTextureType::sRGB));
 
     let lamb1 = world.add_mat(Lambertian::new(0.8, 0.3, 0.3));
     let lamb2 = world.add_mat(Lambertian::new(0.1, 0.1, 0.0));
 
-    let em1 = world.add_mat(Emissive::new(100.0, 100.0, 100.0));
-    let em2 = world.add_mat(Emissive::new(1.0, 1.0, 1.0));
-    let metal1 = world.add_mat(Metal::new(0.9, 0.5, 0.5, 0.0)); // red
-    let metal2 = world.add_mat(Metal::new(1.0, 1.0, 1.0, 0.0));
+    let em_bright = world.add_mat(Emissive::new(100.0, 100.0, 100.0));
+    let em_white = world.add_mat(Emissive::new(1.0, 1.0, 1.0));
+    let metal1 = world.add_mat(Metal::new(0.9, 0.5, 0.5, 0.0)); // red-ish
+    let metal_mirror = world.add_mat(Metal::new(1.0, 1.0, 1.0, 0.0));
+    let metal_rough = world.add_mat(Metal::new(1.0, 1.0, 1.0, 2.3));
 
-    let sphere1 = Sphere::new_with_uv(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(link);
-    let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(metal1);
+    let sphere1 = Sphere::new_with_uv(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(earth);
+    let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(metal_rough);
     let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.5, -0.5), 0.4).primitive(metal1);
     let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).primitive(lamb2); // right one
     let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(lamb1);
 
-    //let plane = Plane::new(Vec4::from3(0.0, 0.0, -10.0), Vec4::from3(-0.5, 0.0, -1.0).norm()).primitive(0); 
+    world.add_prmitive(sphere1);
+    world.add_prmitive(sphere2);
+    world.add_prmitive(sphere3);
+    world.add_prmitive(sphere4);
+    world.add_prmitive(sphere5);
 
-    world.add(sphere1);
-    world.add(sphere2);
-    world.add(sphere3);
-    world.add(sphere4);
-    world.add(sphere5);
-
-    //world.add(plane);
+    println!("tracing...");
 
     let debug = debug_divisior();
 
@@ -268,11 +269,15 @@ fn main() {
         image::Rgb([r, g, b])
     };
 
+    println!("tonemapping...");
+
     for (y, scanline) in scanlines.iter().enumerate() {
         for (x, pixel) in scanline.iter().enumerate() {
             imgbuf.put_pixel(x as u32, y as u32, quantize(pixel)); 
         }
     }
 
-    imgbuf.save("test.png").unwrap();
+    println!("saving...");
+
+    imgbuf.save("output.png").unwrap();
 }
