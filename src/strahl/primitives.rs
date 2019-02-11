@@ -2,6 +2,8 @@ use super::hit::*;
 use super::vec::*;
 use super::ray::*;
 
+use packed_simd::{m16x4, f32x4};
+
 #[derive(Copy, Clone)]
 pub struct Sphere
 {
@@ -171,14 +173,24 @@ impl Hitable for BBox
 
         let winding = if (ray_origin.abs() * self.inv_dimensions).max_elem3() < 1.0 {-1.0} else {1.0};
 
-        let sign = -r.direction.sign();
+        let mut sign = -r.direction.sign();
 
         let dist = (self.dimensions * sign * winding - ray_origin) * self.inv_dimensions;
 
-        // TODO:
-        //# defineTEST(U, VW) (d.U >= 0.0) && \all(lessThan(abs(ray.origin.VW + ray.dir.VW*d.U), box.radius.VW))bvec3 test = bvec3(TEST(x, yz), TEST(y, zx), TEST(z, xy));sgn = test.x ? vec3(sgn.x,0,0) : (test.y ? vec3(0,sgn.y,0) :vec3(0,0,test.z ? sgn.z:0));# undefTEST
+        // TODO: vectrize
+        let test = |u: usize, v: usize, w: usize| -> bool
+        {
+            let dU = r.direction.extract1(u);
+            let uT = dU < 0.0;
+            let vT = uT && (ray_origin.extract1(v) + r.direction.extract1(v) * dU).abs() < self.dimensions.extract1(v);
+            let wT = vT && (ray_origin.extract1(w) + r.direction.extract1(w) * dU).abs() < self.dimensions.extract1(w);
+            wT
+        };
 
-        let (x, y, z) = dist.extract3();
+        let m  = m16x4::new(test(0, 1, 2), test(1, 2, 0), test(2, 0, 1), false);
+        sign.v = m.select(sign.v, f32x4::splat(0.0));
+
+        let (x, y, z) = dist.extract_xyz();
 
         out.depth = if x != 0.0 {x} else { if y != 0.0 {y} else {z} };
         out.normal = sign;

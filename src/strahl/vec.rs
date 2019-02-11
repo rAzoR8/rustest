@@ -72,17 +72,37 @@ impl Vec4 {
         self.v.extract(3)
     }
 
-    pub fn extract(&self) -> (f32, f32, f32, f32)
+    pub fn extract(&self, x: usize, y: usize, z: usize, w: usize) -> (f32, f32, f32, f32)
+    {
+        (self.v.extract(x), self.v.extract(y), self.v.extract(z), self.v.extract(w))
+    }
+
+    pub fn extract3(&self, x: usize, y: usize, z: usize) -> (f32, f32, f32)
+    {
+        (self.v.extract(x), self.v.extract(y), self.v.extract(z))
+    }
+
+    pub fn extract2(&self, x: usize, y: usize) -> (f32, f32)
+    {
+        (self.v.extract(x), self.v.extract(y))
+    }
+
+    pub fn extract1(&self, x: usize) -> f32
+    {
+        self.v.extract(x)
+    }
+
+    pub fn extract_xyzw(&self) -> (f32, f32, f32, f32)
     {
         (self.v.extract(0), self.v.extract(1), self.v.extract(2), self.v.extract(3))
     }
 
-    pub fn extract3(&self) -> (f32, f32, f32)
+    pub fn extract_xyz(&self) -> (f32, f32, f32)
     {
         (self.v.extract(0), self.v.extract(1), self.v.extract(2))
     }
 
-    pub fn extract2(&self) -> (f32, f32)
+    pub fn extract_xy(&self) -> (f32, f32)
     {
         (self.v.extract(0), self.v.extract(1))
     }
