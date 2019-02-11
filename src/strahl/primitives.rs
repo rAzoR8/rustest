@@ -18,19 +18,20 @@ pub struct Plane
     //compute_uv: bool
 }
 
-// #[derive(Copy, Clone)]
-// pub struct AABB
-// {
-//     min: Vec4,
-//     max: Vec4
-// }
+#[derive(Copy, Clone)]
+pub struct BBox
+{
+    center: Vec4,
+    dimensions: Vec4,
+    inv_dimensions: Vec4
+}
 
 #[derive(Copy, Clone)]
 pub enum Primitive
 {
     Sphere {obj: Sphere, mat: u32},
     Plane {obj: Plane, mat: u32},
-    //AABB {obj: AABB, mat: u32}
+    BBox {obj: BBox, mat: u32}
 }
 
 //######################################################################
@@ -141,5 +142,47 @@ impl Hitable for Plane
         }
 
         false
+    }
+}
+
+//######################################################################
+// BBox
+//######################################################################
+
+impl BBox
+{
+    pub fn new(_center: Vec4, _dimensions: Vec4) -> BBox
+    {
+        BBox{center: _center, dimensions: _dimensions, inv_dimensions: 1.0 / _dimensions}
+    }
+
+    pub fn primitive(&self, _mat: u32) -> Primitive
+    {
+        Primitive::BBox{obj: *self, mat: _mat}
+    }
+}
+
+impl Hitable for BBox
+{
+    // http://www.jcgt.org/published/0007/03/04/paper-lowres.pdf
+    fn hit(&self, r: &Ray, out: &mut HitInfo, min: f32, max: f32) -> bool
+    {
+        let ray_origin = r.origin - self.center;
+
+        let winding = if (ray_origin.abs() * self.inv_dimensions).max_elem3() < 1.0 {-1.0} else {1.0};
+
+        let sign = -r.direction.sign();
+
+        let dist = (self.dimensions * sign * winding - ray_origin) * self.inv_dimensions;
+
+        // TODO:
+        //# defineTEST(U, VW) (d.U >= 0.0) && \all(lessThan(abs(ray.origin.VW + ray.dir.VW*d.U), box.radius.VW))bvec3 test = bvec3(TEST(x, yz), TEST(y, zx), TEST(z, xy));sgn = test.x ? vec3(sgn.x,0,0) : (test.y ? vec3(0,sgn.y,0) :vec3(0,0,test.z ? sgn.z:0));# undefTEST
+
+        let (x, y, z) = dist.extract3();
+
+        out.depth = if x != 0.0 {x} else { if y != 0.0 {y} else {z} };
+        out.normal = sign;
+
+        out.depth > min && out.depth < max
     }
 }

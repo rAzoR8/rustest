@@ -88,8 +88,7 @@ impl Hitable for Scene
             {
                 Primitive::Sphere{obj, mat} => { process_hit(obj, *mat); },
                 Primitive::Plane{obj, mat} => { process_hit(obj, *mat); },
-                _ => {}
-                //Primitive::AABBT{obj, mat} => { process_hit(obj, mat); }
+                Primitive::BBox{obj, mat} => { process_hit(obj, *mat); }
             }
         }
 

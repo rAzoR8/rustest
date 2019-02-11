@@ -213,7 +213,7 @@ fn main() {
     println!("loading scene...");
 
     let mut world = Scene::new();
-    world.set_envmap("Ocean.jpg", Vec4::from(2.0), DynamicTextureType::sRGB);
+    //world.set_envmap("Ocean.jpg", Vec4::from(2.0), DynamicTextureType::sRGB);
 
     let earth = world.add_mat(Lambertian::from_path("earth.jpg", DynamicTextureType::sRGB));
 
@@ -232,6 +232,9 @@ fn main() {
     let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).primitive(lamb2); // right one
     let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(lamb1);
 
+    let bbox = BBox::new(Vec4::from3(0.0, 0.2, -0.5), Vec4::one()).primitive(lamb1);
+
+    //world.add_prmitive(bbox);
     world.add_prmitive(sphere1);
     world.add_prmitive(sphere2);
     world.add_prmitive(sphere3);

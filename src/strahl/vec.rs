@@ -72,6 +72,21 @@ impl Vec4 {
         self.v.extract(3)
     }
 
+    pub fn extract(&self) -> (f32, f32, f32, f32)
+    {
+        (self.v.extract(0), self.v.extract(1), self.v.extract(2), self.v.extract(3))
+    }
+
+    pub fn extract3(&self) -> (f32, f32, f32)
+    {
+        (self.v.extract(0), self.v.extract(1), self.v.extract(2))
+    }
+
+    pub fn extract2(&self) -> (f32, f32)
+    {
+        (self.v.extract(0), self.v.extract(1))
+    }
+
     pub fn swizzle(&self, x: u32, y: u32, z: u32, w: u32) -> Vec4 {
         Vec4 {
             v: self.v.shuffle1_dyn(u32x4::new(x, y, z, w)),
@@ -215,6 +230,16 @@ impl Vec4 {
         Vec4{v: self.v.gt(o.v).select(self.v, o.v)}
     }
 
+    pub fn max_elem(&self) -> f32
+    {
+        self.x().max(self.y().max(self.z().max(self.w())))
+    }
+
+    pub fn max_elem3(&self) -> f32
+    {
+        self.x().max(self.y().max(self.z()))
+    }
+
     pub fn clamp(&self, min: &Vec4, max: &Vec4) -> Vec4
     {
         self.max(min).min(max)
@@ -223,6 +248,20 @@ impl Vec4 {
     pub fn clamp_scalar(&self, min: f32, max: f32) -> Vec4
     {
         self.max(&Vec4::from(min)).min(&Vec4::from(max))
+    }
+
+    // sign returns -1.0 if x is less than 0.0, 0.0 if x is equal to 0.0, and +1.0 if x is greater than 0.0. 
+    pub fn sign(&self) -> Vec4
+    {
+        let zero = f32x4::splat(0.0);
+        let sign = self.v.lt(f32x4::splat(0.0)).select(f32x4::splat(-1.0), f32x4::splat(1.0));
+        Vec4{v: self.v.eq(f32x4::splat(0.0)).select(zero, sign)}
+    }
+
+    pub fn abs(&self) -> Vec4
+    {
+        // mask out sign bit
+        Vec4{v: f32x4::from_bits(u32x4::from_bits(self.v) & u32x4::splat(0x7FFFFFFFu32))}
     }
 }
 
