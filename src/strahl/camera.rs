@@ -57,23 +57,6 @@ impl PerspectiveCamera {
         }
     }
 
-    // pub fn get_ray(&self, s: f32, t: f32) -> Ray {
-    //     Ray {
-    //         origin: self.pos,
-    //         direction: self.lower_left_corner + s * self.horizontal + t * self.vertical - self.pos,
-    //     }
-    // }
-
-    // pub fn get_ray2(&self, x: u32, y: u32) -> Ray {
-    //     let s = (x as f32) / (self.width as f32);
-    //     let t = (y as f32) / (self.height as f32);
-
-    //     Ray {
-    //         origin: self.pos,
-    //         direction: self.lower_left_corner + s * self.horizontal + t * self.vertical - self.pos,
-    //     }
-    // }
-
     pub fn get_random_ray(&self, s: f32, t: f32) -> Ray
     {
         let offset = self.lense_radius * random_in_unit_disk();
@@ -90,8 +73,8 @@ impl Camera for PerspectiveCamera
 {
     fn get_ray(&self, x: f32, y: f32) -> Ray
     {
-        let s = (x as f32) / (self.width as f32);
-        let t = (y as f32) / (self.height as f32);
+        let s = x / (self.width as f32);
+        let t = y / (self.height as f32);
 
         Ray
         {

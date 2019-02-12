@@ -126,11 +126,9 @@ pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, 
     for _ in 0..cam.sample_count() {
         
         let (s, t) = random_in_unit_disk2();
-        let u = x as f32 + s * 0.5; /// cam.width() as f32;
-        let v = y as f32 + t * 0.5; /// cam.height() as f32;
+        let u = x as f32 + s * 0.5;
+        let v = y as f32 + t * 0.5;
         ray_info.reset(&cam.get_ray(u, v));
-
-        //ray_info.reset(&cam.get_ray((x as f32 + s * 0.5) as u32, (y as f32 + t * 0.5) as u32));
 
         for _ in 0..MAX_DEPTH {
             if trace(ray_info, &scn, false)
