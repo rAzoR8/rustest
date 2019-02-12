@@ -123,13 +123,14 @@ pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, 
 {
     let mut col = Vec4::zero();
             
-    for _ in 0..cam.samples {
+    for _ in 0..cam.sample_count() {
         
         let (s, t) = random_in_unit_disk2();
-
-        let u = (x as f32 + s * 0.5) / cam.width as f32;
-        let v = (y as f32 + t * 0.5) / cam.height as f32;
+        let u = x as f32 + s * 0.5; /// cam.width() as f32;
+        let v = y as f32 + t * 0.5; /// cam.height() as f32;
         ray_info.reset(&cam.get_ray(u, v));
+
+        //ray_info.reset(&cam.get_ray((x as f32 + s * 0.5) as u32, (y as f32 + t * 0.5) as u32));
 
         for _ in 0..MAX_DEPTH {
             if trace(ray_info, &scn, false)
@@ -142,27 +143,27 @@ pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, 
         *ray_count += ray_info.depth;
     }
 
-    col /= cam.samples as f32;
+    col /= cam.sample_count() as f32;
 
     col
 }
 
-pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutput
+pub fn trace_image<>(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutput
 {
     let ray_count = AtomicU32::new(0);
     let line_count = AtomicU32::new(0);
 
     let trace_scan_line = |y: u32| -> ScanLine
     {
-        let mut scan_line = ScanLine::with_capacity(cam.width as usize);
+        let mut scan_line = ScanLine::with_capacity(cam.width() as usize);
 
         let scan_time = SystemTime::now();
         let mut ray = RayInfo::new();        
 
         let mut local_ray_count = 0;
-        for x in 0..cam.width
+        for x in 0..cam.width()
         {
-            scan_line.push(color(&scn, &cam, x, y, &mut ray, &mut local_ray_count));        
+            scan_line.push(color(&scn, cam, x, y, &mut ray, &mut local_ray_count));        
         }
 
         let cur_ray_count = ray_count.fetch_add(local_ray_count, Ordering::SeqCst);
@@ -172,7 +173,7 @@ pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutp
             let cur_line_count = line_count.fetch_add(1, Ordering::SeqCst);
             let duration = scan_time.elapsed().unwrap().as_micros();
             let speed = local_ray_count as f64 / duration as f64;
-            let percent = (cur_line_count * 100) as f32 / cam.height as f32;
+            let percent = (cur_line_count * 100) as f32 / cam.height() as f32;
             print!("Y {} Progress {} \t Rays {} {} MRay/s \n", y, percent, cur_ray_count, speed as f32);
         }
 
@@ -182,15 +183,15 @@ pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutp
     //// TRACING ////
     let total_time = SystemTime::now();
 
-    let mut scanlines = TraceOutput::with_capacity(cam.height as usize);
+    let mut scanlines = TraceOutput::with_capacity(cam.height() as usize);
     if MULTTHREADING && debug_divisior() == 1
     {
-        let par_iter = (0..cam.height).into_par_iter().map(|y| trace_scan_line(y));
+        let par_iter = (0..cam.height()).into_par_iter().map(|y| trace_scan_line(y));
         scanlines = par_iter.collect();
     }
     else
     {
-        for y in 0..cam.height
+        for y in 0..cam.height()
         {
             scanlines.push(trace_scan_line(y));
         }
@@ -253,11 +254,11 @@ fn main() {
     let target = Vec4::from3(0.0, 0.0, -1.0);
     let up = Vec4::from3(0.0, 1.0, 0.0);
 
-    let cam = Camera::new(origin, target, up, 60.0, width, height, 0.0, 100.0, samples);
+    let cam = PerspectiveCamera::new(origin, target, up, 60.0, width, height, 0.0, 100.0, samples);
 
     let scanlines = trace_image(&cam, &world, false);
 
-    let mut imgbuf = image::ImageBuffer::new(cam.width, cam.height);
+    let mut imgbuf = image::ImageBuffer::new(cam.width(), cam.height());
 
     let tone_operator = ReinhardTonemap::new(2.2, 1.0);
 
