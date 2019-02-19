@@ -3,6 +3,22 @@ use super::ray::*;
 use super::random::*;
 use std::f32::consts::PI;
 
+#[derive(PartialEq, Copy, Clone)]
+pub enum Channel
+{
+    R = 0,
+    G,
+    B,
+    All
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum Mode
+{
+    Combined = 0,
+    Separate = 1
+}
+
 use std::marker::{Send, Sync};
 pub trait Camera: Send + Sync
 {
@@ -12,17 +28,19 @@ pub trait Camera: Send + Sync
     fn width(&self) -> u32;
     fn height(&self) -> u32;
 
+    fn mode(&self) -> Mode;
+
     // floating pixel coordinates in [widthxheight]
-    fn get_ray(&self, x: f32, y: f32) -> Ray;
+    fn get_ray(&self, x: f32, y: f32, channel: Channel) -> Ray;
 }
 
 #[derive(Copy, Clone)]
 pub struct PerspectiveCamera
 {
     pos: Vec4,
-    w: Vec4, // look dir
-    u: Vec4, 
-    v: Vec4,
+    // w: Vec4, // look dir
+    // u: Vec4, 
+    // v: Vec4,
     lense_radius: f32,
     lower_left_corner: Vec4,
     horizontal: Vec4,
@@ -33,7 +51,7 @@ pub struct PerspectiveCamera
 }
 
 impl PerspectiveCamera {
-    pub fn new(origin: Vec4, target: Vec4, up: Vec4, fovy: f32, _width: u32, _height: u32,  lense_diameter: f32, far: f32, _samples: u32) -> PerspectiveCamera
+    pub fn new(origin: Vec4, target: Vec4, up: Vec4, fovy: f32, _width: u32, _height: u32, lense_diameter: f32, far: f32, _samples: u32) -> PerspectiveCamera
     {
         let half_height = (fovy*PI/360.0).tan();
         let half_width = ((_width as f32) / (_height as f32)) * half_height;
@@ -44,9 +62,9 @@ impl PerspectiveCamera {
         PerspectiveCamera
         {
             pos: origin,
-            w: _w,
-            u: _u,
-            v: _v,
+            // w: _w,
+            // u: _u,
+            // v: _v,
             lense_radius: lense_diameter / 2.0,
             lower_left_corner: origin - half_width*far*_u -half_height*far*_v - far*_w,
             horizontal: 2.0*half_width*far*_u,
@@ -71,7 +89,7 @@ impl PerspectiveCamera {
 
 impl Camera for PerspectiveCamera
 {
-    fn get_ray(&self, x: f32, y: f32) -> Ray
+    fn get_ray(&self, x: f32, y: f32, channel: Channel) -> Ray
     {
         let s = x / (self.width as f32);
         let t = y / (self.height as f32);
@@ -82,6 +100,8 @@ impl Camera for PerspectiveCamera
             direction: self.lower_left_corner + s*self.horizontal + t*self.vertical - self.pos
         }
     }
+
+    fn mode(&self ) -> Mode { Mode::Combined }
 
     fn sample_count(&self) -> u32 {self.samples}
     fn width(&self) -> u32 {self.width}

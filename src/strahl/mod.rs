@@ -12,3 +12,4 @@ pub mod material;
 pub mod random;
 pub mod texture;
 pub mod tonemap;
+pub mod as3dcamera;

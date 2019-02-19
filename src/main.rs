@@ -16,6 +16,7 @@ use crate::strahl::ray::*;
 use crate::strahl::random::*;
 use crate::strahl::tonemap::*;
 use crate::strahl::texture::*;
+use crate::strahl::as3dcamera::*;
 
 use image::{GenericImageView, ImageBuffer, imageops};
 use rayon::prelude::*;
@@ -121,32 +122,39 @@ pub fn trace(r: &mut RayInfo, scn: &Scene, normal: bool) -> bool
 #[inline]
 pub fn color(scn: &Scene, cam: &Camera, x: u32, y: u32, ray_info: &mut RayInfo, ray_count: &mut u32) -> Vec4
 {
-    let mut col = Vec4::zero();
-            
-    for _ in 0..cam.sample_count() {
-        
-        let (s, t) = random_in_unit_disk2();
-        let u = x as f32 + s * 0.5;
-        let v = y as f32 + t * 0.5;
-        ray_info.reset(&cam.get_ray(u, v));
+    let mut rnd_ray = |channel: Channel| -> Vec4{
+        let mut col = Vec4::zero();
 
-        for _ in 0..MAX_DEPTH {
-            if trace(ray_info, &scn, false)
-            {
-                break;
+        for _ in 0..cam.sample_count() {
+            let (s, t) = random_in_unit_disk2();
+            let u = x as f32 + s * 0.5;
+            let v = y as f32 + t * 0.5;
+            ray_info.reset(&cam.get_ray(u, v, channel));
+
+            for _ in 0..MAX_DEPTH {
+                if trace(ray_info, &scn, false) {
+                    break;
+                }
             }
+
+            col += ray_info.accumulate();
+            *ray_count += ray_info.depth;
         }
 
-        col += ray_info.accumulate();
-        *ray_count += ray_info.depth;
+        col / cam.sample_count() as f32
+    };
+
+    if cam.mode() == Mode::Combined
+    {
+        return rnd_ray(Channel::All);
     }
-
-    col /= cam.sample_count() as f32;
-
-    col
+    else
+    {
+        return Vec4::from3(rnd_ray(Channel::R).r(), rnd_ray(Channel::G).g(), rnd_ray(Channel::B).b());
+    }
 }
 
-pub fn trace_image<>(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutput
+pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutput
 {
     let ray_count = AtomicU32::new(0);
     let line_count = AtomicU32::new(0);
@@ -252,7 +260,8 @@ fn main() {
     let target = Vec4::from3(0.0, 0.0, -1.0);
     let up = Vec4::from3(0.0, 1.0, 0.0);
 
-    let cam = PerspectiveCamera::new(origin, target, up, 60.0, width, height, 0.0, 100.0, samples);
+    //let cam = PerspectiveCamera::new(origin, target, up, 60.0, width, height, 0.0, 100.0, samples);
+    let cam = AS3DCamera::new(origin, target, up, 60.0, width, height, 100.0, samples, 0.1, 8, 2.0, 3.0);
 
     let scanlines = trace_image(&cam, &world, false);
 
