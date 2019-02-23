@@ -350,6 +350,12 @@ impl Into<f32x4> for Vec4 {
     }
 }
 
+impl Into<f32x4> for &Vec4 {
+    fn into(self) -> f32x4 {
+        self.v
+    }
+}
+
 //######################################################################
 // Add Vec4 + Vec4
 //######################################################################
@@ -363,6 +369,22 @@ impl Add<Vec4> for Vec4 {
 }
 
 impl Add<&Vec4> for Vec4 {
+    type Output = Vec4;
+
+    fn add(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: self.v + o.v }
+    }
+}
+
+impl Add<Vec4> for &Vec4 {
+    type Output = Vec4;
+
+    fn add(self, o: Vec4) -> Vec4 {
+        Vec4 { v: self.v + o.v }
+    }
+}
+
+impl Add<&Vec4> for &Vec4 {
     type Output = Vec4;
 
     fn add(self, o: &Vec4) -> Vec4 {
@@ -402,6 +424,22 @@ impl Add<&f32> for Vec4 {
     }
 }
 
+impl Add<f32> for &Vec4 {
+    type Output = Vec4;
+
+    fn add(self, o: f32) -> Vec4 {
+        Vec4 { v: self.v + o }
+    }
+}
+
+impl Add<&f32> for &Vec4 {
+    type Output = Vec4;
+
+    fn add(self, o: &f32) -> Vec4 {
+        Vec4 { v: self.v + *o }
+    }
+}
+
 impl AddAssign<f32> for Vec4 {
     fn add_assign(&mut self, o: f32) {
         self.v += o
@@ -430,6 +468,22 @@ impl Add<&Vec4> for f32 {
     }
 }
 
+impl Add<Vec4> for &f32 {
+    type Output = Vec4;
+
+    fn add(self, o: Vec4) -> Vec4 {
+        Vec4 { v: o.v + *self}
+    }
+}
+
+impl Add<&Vec4> for &f32 {
+    type Output = Vec4;
+
+    fn add(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: o.v + *self}
+    }
+}
+
 //######################################################################
 // Sub
 //######################################################################
@@ -443,6 +497,22 @@ impl Sub<Vec4> for Vec4 {
 }
 
 impl Sub<&Vec4> for Vec4 {
+    type Output = Vec4;
+
+    fn sub(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: self.v - o.v }
+    }
+}
+
+impl Sub<Vec4> for &Vec4 {
+    type Output = Vec4;
+
+    fn sub(self, o: Vec4) -> Vec4 {
+        Vec4 { v: self.v - o.v }
+    }
+}
+
+impl Sub<&Vec4> for &Vec4 {
     type Output = Vec4;
 
     fn sub(self, o: &Vec4) -> Vec4 {
@@ -482,6 +552,22 @@ impl Sub<&f32> for Vec4 {
     }
 }
 
+impl Sub<f32> for &Vec4 {
+    type Output = Vec4;
+
+    fn sub(self, o: f32) -> Vec4 {
+        Vec4 { v: self.v - o }
+    }
+}
+
+impl Sub<&f32> for &Vec4 {
+    type Output = Vec4;
+
+    fn sub(self, o: &f32) -> Vec4 {
+        Vec4 { v: self.v - *o }
+    }
+}
+
 impl SubAssign<f32> for Vec4 {
     fn sub_assign(&mut self, o: f32) {
         self.v -= o
@@ -507,6 +593,22 @@ impl Sub<&Vec4> for f32 {
 
     fn sub(self, o: &Vec4) -> Vec4 {
         Vec4 { v: self - o.v }
+    }
+}
+
+impl Sub<Vec4> for &f32 {
+    type Output = Vec4;
+
+    fn sub(self, o: Vec4) -> Vec4 {
+        Vec4 { v: *self - o.v}
+    }
+}
+
+impl Sub<&Vec4> for &f32 {
+    type Output = Vec4;
+
+    fn sub(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: *self - o.v }
     }
 }
 
@@ -539,6 +641,22 @@ impl MulAssign<&Vec4> for Vec4 {
 impl MulAssign<Vec4> for Vec4 {
     fn mul_assign(&mut self, o: Vec4) {
         self.v *= o.v
+    }
+}
+
+impl Mul<&Vec4> for &Vec4 {
+    type Output = Vec4;
+
+    fn mul(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: self.v * o.v }
+    }
+}
+
+impl Mul<Vec4> for &Vec4 {
+    type Output = Vec4;
+
+    fn mul(self, o: Vec4) -> Vec4 {
+        Vec4 { v: self.v * o.v }
     }
 }
 
@@ -580,6 +698,40 @@ impl Mul<&Vec4> for f32
     }
 }
 
+impl Mul<f32> for &Vec4 {
+    type Output = Vec4;
+
+    fn mul(self, o: f32) -> Vec4 {
+        Vec4 { v: self.v * o }
+    }
+}
+
+impl Mul<&f32> for &Vec4 {
+    type Output = Vec4;
+
+    fn mul(self, o: &f32) -> Vec4 {
+        Vec4 { v: self.v * *o }
+    }
+}
+
+impl Mul<Vec4> for &f32
+{
+    type Output = Vec4;
+
+    fn mul(self, o: Vec4) -> Vec4 {
+        Vec4 { v: o.v * *self}
+    }
+}
+
+impl Mul<&Vec4> for &f32
+{
+    type Output = Vec4;
+
+    fn mul(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: o.v * *self}
+    }
+}
+
 impl MulAssign<f32> for Vec4 {
     fn mul_assign(&mut self, o: f32) {
         self.v *= o
@@ -612,6 +764,22 @@ impl Div<&Vec4> for Vec4 {
     }
 }
 
+impl Div<Vec4> for &Vec4 {
+    type Output = Vec4;
+
+    fn div(self, o: Vec4) -> Vec4 {
+        Vec4 { v: self.v / o.v }
+    }
+}
+
+impl Div<&Vec4> for &Vec4 {
+    type Output = Vec4;
+
+    fn div(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: self.v / o.v }
+    }
+}
+
 impl DivAssign<&Vec4> for Vec4 {
     fn div_assign(&mut self, o: &Vec4) {
         self.v /= o.v
@@ -625,6 +793,14 @@ impl DivAssign<Vec4> for Vec4 {
 }
 
 impl Div<f32> for Vec4 {
+    type Output = Vec4;
+
+    fn div(self, o: f32) -> Vec4 {
+        Vec4 { v: self.v / o }
+    }
+}
+
+impl Div<f32> for &Vec4 {
     type Output = Vec4;
 
     fn div(self, o: f32) -> Vec4 {
@@ -654,6 +830,24 @@ impl Div<Vec4> for f32
 }
 
 impl Div<&Vec4> for f32
+{
+    type Output = Vec4;
+
+    fn div(self, o: &Vec4) -> Vec4 {
+        Vec4 { v: 1.0 / o.v }
+    }
+}
+
+impl Div<Vec4> for &f32
+{
+    type Output = Vec4;
+
+    fn div(self, o: Vec4) -> Vec4 {
+        Vec4 { v: 1.0 / o.v }
+    }
+}
+
+impl Div<&Vec4> for &f32
 {
     type Output = Vec4;
 
