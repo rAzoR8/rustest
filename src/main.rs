@@ -260,8 +260,8 @@ fn main() {
     let target = Vec4::from3(0.0, 0.0, -1.0);
     let up = Vec4::from3(0.0, 1.0, 0.0);
 
-    //let cam = PerspectiveCamera::new(origin, target, up, 60.0, width, height, 0.0, 100.0, samples);
-    let cam = AS3DCamera::new(origin, target, up, 60.0, width, height, 100.0, samples, 0.1, 8, 2.0, 3.0);
+    let cam = PerspectiveCamera::new(origin, target, up, 60.0, width, height, 0.0, 100.0, samples);
+    //let cam = AS3DCamera::new(origin, target, up, 60.0, width, height, 100.0, samples, 0.1, 8, 2.0, 3.0);
 
     let scanlines = trace_image(&cam, &world, false);
 

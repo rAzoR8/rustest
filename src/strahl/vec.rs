@@ -36,8 +36,17 @@ impl Vec4 {
         }
     }
 
-    pub fn get(&self) -> &f32x4 {
+    pub fn get_inner(&self) -> &f32x4 {
         &self.v
+    }
+
+    pub fn get(&self, idx: usize) -> f32 {
+        self.v.extract(idx)
+    }
+
+    pub fn set(&mut self, x: f32, idx: usize)
+    {
+        self.v.replace(idx, x);
     }
 
     pub fn x(&self) -> f32 {
