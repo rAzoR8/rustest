@@ -9,6 +9,7 @@ pub struct Quat
     pub q: Vec4
 }
 
+// http://www.essentialmath.com/GDC2012/GDC2012_JMV_Rotations.pdf
 impl Quat {
     // Identity
     pub fn new() -> Quat {
@@ -45,6 +46,7 @@ impl Quat {
         (self * Quat::from(v) * self.conjugate()).q
     }
 
+    // concatenation order is right-to-left => q0q1 = q1 * q0
     fn multiply(&self, o: &Quat) -> Quat {
         //https://gist.github.com/mattatz/40a91588d5fb38240403f198a938a593
         //var.xyz = q2.xyz * q1.w + q1.xyz * q2.w + cross(q1.xyz, q2.xyz);

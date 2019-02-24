@@ -66,29 +66,16 @@ impl Scene {
     }
 }
 
-impl Hitable for Scene
-{
-    fn hit(&self, r: &Ray, out: &mut HitInfo, min: f32, max: f32) -> bool
-    {
+impl Hitable for Scene {
+    fn hit(&self, r: &Ray, out: &mut HitInfo, min: f32, max: f32) -> bool {
         let mut best_info = HitInfo::new();
         best_info.depth = max;
 
-        let mut process_hit = |obj: &Hitable, mat: u32| 
-        {
-            let mut info = HitInfo::new();
-            if obj.hit(r, &mut info, min, best_info.depth) //&& info.depth < best_info.depth
-            {             
-                best_info = info;
-                best_info.material = mat;
-            }
-        };
-
+        let mut info = HitInfo::new();
         for primitve in self.primitives.iter() {
-            match primitve 
+            if primitve.hit(r, &mut info, min, best_info.depth)
             {
-                Primitive::Sphere{obj, mat} => { process_hit(obj, *mat); },
-                Primitive::Plane{obj, mat} => { process_hit(obj, *mat); },
-                Primitive::BBox{obj, mat} => { process_hit(obj, *mat); }
+                best_info = info;
             }
         }
 

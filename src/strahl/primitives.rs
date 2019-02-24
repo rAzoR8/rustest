@@ -36,6 +36,30 @@ pub enum Primitive
     BBox {obj: BBox, mat: u32}
 }
 
+impl Hitable for Primitive
+{
+    fn hit(&self, r: &Ray, out: &mut HitInfo, min: f32, max: f32) -> bool {
+
+        let mut process_hit = |obj: &Hitable, mat: u32| -> bool
+        {
+            let hit = obj.hit(r, out, min, max);
+            if hit
+            {             
+                out.material = mat;
+            }
+
+            hit
+        };
+
+        match self 
+        {
+            Primitive::Sphere{obj, mat} => { process_hit(obj, *mat) },
+            Primitive::Plane{obj, mat} => { process_hit(obj, *mat) },
+            Primitive::BBox{obj, mat} => { process_hit(obj, *mat) }
+        }
+    }
+}
+
 //######################################################################
 // Sphere
 //######################################################################
