@@ -59,16 +59,22 @@ impl Object
 
 impl Hitable for Object
 {
-    fn hit(&self, r: &Ray, out: &mut HitInfo, min: f32, max: f32) -> bool {
+    fn hit(&self, _r: &Ray, out: &mut HitInfo, min: f32, max: f32) -> bool {
+
+        //let r = _r.rotate(&self.rot);
+        let r = _r;
+
         let hit = match self.prim 
         {
-            Primitive::Sphere{obj} => { obj.hit(r, out, min, max) },
-            Primitive::Plane{obj} => { obj.hit(r, out, min, max) },
-            Primitive::BBox{obj} => { obj.hit(r, out, min, max) }
+            Primitive::Sphere{obj} => { obj.hit(&r, out, min, max) },
+            Primitive::Plane{obj} => { obj.hit(&r, out, min, max) },
+            Primitive::BBox{obj} => { obj.hit(&r, out, min, max) }
         };
 
         if hit
-        {             
+        {
+            //out.point = self.rot.inverse_rotate_unit(&out.point);
+            //out.normal = self.rot.inverse_rotate_unit(&out.normal).norm3();
             out.material = self.mat;
         }
 

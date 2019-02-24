@@ -1,4 +1,5 @@
 use super::vec::*;
+use super::quaternion::*;
 
 #[derive(Copy, Clone)]
 pub struct Ray {
@@ -24,5 +25,13 @@ impl Ray {
     pub fn point_at(&self, _dist: f32) -> Vec4
     {
         self.origin + self.direction * _dist
+    }
+
+    pub fn rotate(&self, rot: &Quat) -> Ray
+    {
+        Ray {
+            origin: rot.rotate_unit(&self.origin),
+            direction: rot.rotate_unit(&self.direction) // norm3 ?
+        }
     }
 }

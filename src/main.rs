@@ -17,6 +17,7 @@ use crate::strahl::random::*;
 use crate::strahl::tonemap::*;
 use crate::strahl::texture::*;
 use crate::strahl::as3dcamera::*;
+use crate::strahl::quaternion::*;
 
 use image::{GenericImageView, ImageBuffer, imageops};
 use rayon::prelude::*;
@@ -233,7 +234,8 @@ fn main() {
     let metal_mirror = world.add_mat(Metal::new(1.0, 1.0, 1.0, 0.0));
     let metal_rough = world.add_mat(Metal::new(1.0, 1.0, 1.0, 2.3));
 
-    let sphere1 = Sphere::new_with_uv(Vec4::from3(0.0, 0.0, -1.0), 0.5).object(earth);
+    let mut sphere1 = Sphere::new_with_uv(Vec4::from3(0.0, 0.0, -1.0), 0.5).object(earth);
+    sphere1.rot = Quat::from_axis_angle_deg(&Vec4::from3(0.0, 1.0, 0.0), 10.0);
     let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).object(metal_rough);
     let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.5, -0.5), 0.4).object(metal1);
     let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).object(lamb2); // right one

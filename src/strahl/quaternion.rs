@@ -43,8 +43,16 @@ impl Quat {
         (self * Quat::from(v) * self.inverse()).q
     }
 
+    pub fn inverse_rotate(&self, v: &Vec4) -> Vec4 {
+        (self.inverse() * Quat::from(v) * self).q
+    }
+
     pub fn rotate_unit(&self, v: &Vec4) -> Vec4 {
         (self * Quat::from(v) * self.conjugate()).q
+    }
+
+    pub fn inverse_rotate_unit(&self, v: &Vec4) -> Vec4 {
+        (self.conjugate() * Quat::from(v) * self).q
     }
 
     // concatenation order is right-to-left => q0q1 = q1 * q0
