@@ -8,7 +8,7 @@ use super::texture::DynamicTextureType;
 
 pub struct Scene
 {
-    primitives: std::vec::Vec<Primitive>,
+    objects: std::vec::Vec<Object>,
     materials: std::vec::Vec<Material>,
     miss: u32
 }
@@ -16,7 +16,7 @@ pub struct Scene
 impl Scene {
     pub fn new() -> Scene {
         let mut scn = Scene {
-            primitives: std::vec::Vec::new(),
+            objects: std::vec::Vec::new(),
             materials: std::vec::Vec::new(),
             miss: 0,
         };
@@ -35,10 +35,10 @@ impl Scene {
         self.get_mat(self.miss)
     }
 
-    pub fn add_prmitive(&mut self, obj: Primitive) -> u32
+    pub fn add_prmitive(&mut self, obj: Object) -> u32
     {
-        self.primitives.push(obj);
-        (self.primitives.len() - 1) as u32
+        self.objects.push(obj);
+        (self.objects.len() - 1) as u32
     }
 
     pub fn add_mat(&mut self, mat: Material) -> u32
@@ -62,7 +62,7 @@ impl Scene {
     where P: AsRef<std::path::Path>,
     {
         let mat = self.add_mat(Emissive::from_path(path, _strength, _type));
-        (self.add_prmitive(Sphere::new_with_uv(Vec4::zero(), 100.0).primitive(mat)), mat)
+        (self.add_prmitive(Sphere::new_with_uv(Vec4::zero(), 100.0).object(mat)), mat)
     }
 }
 
@@ -72,8 +72,8 @@ impl Hitable for Scene {
         best_info.depth = max;
 
         let mut info = HitInfo::new();
-        for primitve in self.primitives.iter() {
-            if primitve.hit(r, &mut info, min, best_info.depth)
+        for obj in self.objects.iter() {
+            if obj.hit(r, &mut info, min, best_info.depth)
             {
                 best_info = info;
             }

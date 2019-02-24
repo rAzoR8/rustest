@@ -1,6 +1,7 @@
 use super::hit::*;
 use super::vec::*;
 use super::ray::*;
+use super::quaternion::*;
 
 use packed_simd::{m16x4, f32x4};
 
@@ -28,35 +29,50 @@ pub struct BBox
     inv_dimensions: Vec4
 }
 
+//######################################################################
+// Object
+//######################################################################
+
 #[derive(Copy, Clone)]
 pub enum Primitive
 {
-    Sphere {obj: Sphere, mat: u32},
-    Plane {obj: Plane, mat: u32},
-    BBox {obj: BBox, mat: u32}
+    Sphere {obj: Sphere},
+    Plane {obj: Plane},
+    BBox {obj: BBox}
 }
 
-impl Hitable for Primitive
+#[derive(Copy, Clone)]
+pub struct Object
+{
+    pub prim: Primitive,
+    pub mat: u32,
+    pub rot: Quat
+}
+
+impl Object
+{
+    pub fn new(_prim: &Primitive, _mat: u32, _rot: Quat) -> Object
+    {
+        Object{mat: _mat, rot: _rot, prim: *_prim}
+    }
+}
+
+impl Hitable for Object
 {
     fn hit(&self, r: &Ray, out: &mut HitInfo, min: f32, max: f32) -> bool {
-
-        let mut process_hit = |obj: &Hitable, mat: u32| -> bool
+        let hit = match self.prim 
         {
-            let hit = obj.hit(r, out, min, max);
-            if hit
-            {             
-                out.material = mat;
-            }
-
-            hit
+            Primitive::Sphere{obj} => { obj.hit(r, out, min, max) },
+            Primitive::Plane{obj} => { obj.hit(r, out, min, max) },
+            Primitive::BBox{obj} => { obj.hit(r, out, min, max) }
         };
 
-        match self 
-        {
-            Primitive::Sphere{obj, mat} => { process_hit(obj, *mat) },
-            Primitive::Plane{obj, mat} => { process_hit(obj, *mat) },
-            Primitive::BBox{obj, mat} => { process_hit(obj, *mat) }
+        if hit
+        {             
+            out.material = self.mat;
         }
+
+        hit
     }
 }
 
@@ -76,9 +92,9 @@ impl Sphere
         Sphere{pos: _pos, radius: _radius, compute_uv: true}
     }
 
-    pub fn primitive(&self, _mat: u32) -> Primitive
+    pub fn object(&self, _mat: u32) -> Object
     {
-        Primitive::Sphere{obj: *self, mat: _mat}
+        Object::new(&Primitive::Sphere{obj: *self}, _mat, Quat::new())
     }
 }
 
@@ -142,9 +158,9 @@ impl Plane
         Plane{pos: _pos, normal: _normal}
     }
 
-    pub fn primitive(&self, _mat: u32) -> Primitive
+    pub fn object(&self, _mat: u32) -> Object
     {
-        Primitive::Plane{obj: *self, mat: _mat}
+        Object::new(&Primitive::Plane{obj: *self}, _mat, Quat::new())
     }
 }
 
@@ -182,9 +198,9 @@ impl BBox
         BBox{center: _center, dimensions: _dimensions, inv_dimensions: 1.0 / _dimensions}
     }
 
-    pub fn primitive(&self, _mat: u32) -> Primitive
+    pub fn object(&self, _mat: u32) -> Object
     {
-        Primitive::BBox{obj: *self, mat: _mat}
+        Object::new(&Primitive::BBox{obj: *self}, _mat, Quat::new())
     }
 }
 

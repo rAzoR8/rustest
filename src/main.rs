@@ -233,13 +233,13 @@ fn main() {
     let metal_mirror = world.add_mat(Metal::new(1.0, 1.0, 1.0, 0.0));
     let metal_rough = world.add_mat(Metal::new(1.0, 1.0, 1.0, 2.3));
 
-    let sphere1 = Sphere::new_with_uv(Vec4::from3(0.0, 0.0, -1.0), 0.5).primitive(earth);
-    let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).primitive(metal_rough);
-    let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.5, -0.5), 0.4).primitive(metal1);
-    let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).primitive(lamb2); // right one
-    let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).primitive(lamb1);
+    let sphere1 = Sphere::new_with_uv(Vec4::from3(0.0, 0.0, -1.0), 0.5).object(earth);
+    let sphere2 = Sphere::new(Vec4::from3(0.0, -100.5, -1.0), 100.0).object(metal_rough);
+    let sphere3 = Sphere::new(Vec4::from3(-1.5, 0.5, -0.5), 0.4).object(metal1);
+    let sphere4 = Sphere::new(Vec4::from3(-1.0, 0.0, -0.5), 0.1).object(lamb2); // right one
+    let sphere5 = Sphere::new(Vec4::from3(-1.0, 0.0, -1.0), 0.3).object(lamb1);
 
-    let bbox = BBox::new(Vec4::from3(0.0, 0.2, -0.5), Vec4::one()).primitive(lamb1);
+    let bbox = BBox::new(Vec4::from3(0.0, 0.2, -0.5), Vec4::one()).object(lamb1);
 
     //world.add_prmitive(bbox);
     world.add_prmitive(sphere1);

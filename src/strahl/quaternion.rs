@@ -1,8 +1,9 @@
 use super::vec::*;
 use super::mat::*;
 
-use std::ops::{Mul, MulAssign};
+use std::ops::{Mul, MulAssign, Neg};
 
+#[derive(Copy, Clone)]
 pub struct Quat
 {
     // complex 3, w scalar
@@ -144,5 +145,17 @@ impl MulAssign<Quat> for Quat {
 impl MulAssign<&Quat> for Quat {
     fn mul_assign(&mut self, o: &Quat) {
         *self = self.multiply(&o)
+    }
+}
+
+//######################################################################
+// Neq
+//######################################################################
+
+impl Neg for Quat {
+    type Output = Quat;
+
+    fn neg(self) -> Quat {
+        self.conjugate()
     }
 }
