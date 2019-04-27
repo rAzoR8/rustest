@@ -91,13 +91,31 @@ impl DynamicTexture
     pub fn new<P>(path: P, _type: DynamicTextureType) -> DynamicTexture
     where P: AsRef<Path>
     {
-        DynamicTexture{img: image::open(path).unwrap(), load_type: _type}
+        let img_file = match image::open(path)
+        {
+            Ok(file) => file,
+            Err(e) => {
+                eprintln!("{}", e);
+                image::DynamicImage::new_rgb8(1, 1)
+            } 
+        };
+
+        DynamicTexture{img: img_file, load_type: _type}
     }    
 
     pub fn texture<P>(path: P, _type: DynamicTextureType) -> Texture
     where P: AsRef<Path>
     {
-        Texture::DynamicTexture{tex: DynamicTexture{img: image::open(path).unwrap(), load_type: _type}}
+        let img_file = match image::open(path)
+        {
+            Ok(file) => file,
+            Err(e) => {
+                eprintln!("{}", e);
+                image::DynamicImage::new_rgb8(1, 1)
+            } 
+        };
+
+        Texture::DynamicTexture{tex: DynamicTexture{img: img_file, load_type: _type}}
     }
 }
 

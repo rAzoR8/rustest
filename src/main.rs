@@ -1,4 +1,4 @@
-#![feature(duration_as_u128)]
+//#![feature(duration_as_u128)]
 #![feature(duration_float)]
 #![feature(integer_atomics)]
 
@@ -16,7 +16,7 @@ use crate::strahl::ray::*;
 use crate::strahl::random::*;
 use crate::strahl::tonemap::*;
 use crate::strahl::texture::*;
-use crate::strahl::as3dcamera::*;
+//use crate::strahl::as3dcamera::*;
 use crate::strahl::quaternion::*;
 
 use image::{GenericImageView, ImageBuffer, imageops};
@@ -208,7 +208,7 @@ pub fn trace_image(cam: &Camera, scn: &Scene, print_progress: bool) -> TraceOutp
     //// TRACING ////
 
     let duration = elapsed.as_micros() as f64;
-    let seconds = elapsed.as_float_secs();
+    let seconds = elapsed.as_secs_f64();
     let speed = ray_count.into_inner() as f64 / duration;
 
     println!("Avg {} MRay/s {} Seconds", speed as f32, seconds);
